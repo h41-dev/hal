@@ -1,6 +1,7 @@
 use alloc::boxed::Box;
 use alloc::string::String;
 
+use hal_core::module::{Value, ValueType};
 pub use instruction::WasmInstruction;
 pub(crate) use opcode::Opcode;
 
@@ -206,9 +207,37 @@ pub enum WasmValueType {
     I64,
 }
 
+impl From<WasmValueType> for ValueType {
+    fn from(value: WasmValueType) -> Self {
+        match value {
+            WasmValueType::I32 => ValueType::I32,
+            WasmValueType::I64 => ValueType::I64
+        }
+    }
+}
+
+impl From<&WasmValueType> for ValueType {
+    fn from(value: &WasmValueType) -> Self {
+        match value {
+            WasmValueType::I32 => ValueType::I32,
+            WasmValueType::I64 => ValueType::I64
+        }
+    }
+}
+
+
 #[cfg_attr(any(test, debug_assertions), derive(Debug))]
 #[derive(PartialEq)]
 pub enum WasmValue {
     I32(i32),
     I64(i64),
+}
+
+impl From<WasmValue> for Value {
+    fn from(value: WasmValue) -> Self {
+        match value {
+            WasmValue::I32(v) => Value::I32(v),
+            WasmValue::I64(v) => Value::I64(v)
+        }
+    }
 }

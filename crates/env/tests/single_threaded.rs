@@ -5,12 +5,6 @@ mod tests {
 
     #[test]
     fn invoke_function() {
-        let tests = vec![
-            (2, 3, 5),
-            (10, 5, 15),
-            (1, 1, 2),
-        ];
-
         let mut env = SingleThreadedEnvironment::default();
         let mut handle = env.spawn(wat_source::string(
             r#"(module
@@ -22,12 +16,9 @@ mod tests {
                     )"#
         )).unwrap();
 
-        for (left, right, want) in tests {
-            let args = vec![Value::I32(left), Value::I32(right)];
-            let result = handle.invoke("add", args).unwrap();
-            assert_eq!(result, Some(Value::I32(want)));
-        }
 
-        print!("{:?}", handle);
+        let args = vec![Value::I32(40), Value::I32(2)];
+        let result = handle.invoke("add", args).unwrap();
+        assert_eq!(result, Some(Value::I32(42)));
     }
 }

@@ -1,5 +1,6 @@
+use alloc::boxed::Box;
 use alloc::vec::Vec;
-use hal_core::module::{Value, ValueType};
+use hal_core::module::{Function, FunctionLocal, Value, ValueType};
 use crate::process::frame::Frame;
 use crate::process::state::ProcessState;
 use crate::Trap;
@@ -13,29 +14,30 @@ pub struct Process{
 
 impl Process {
 
-    // pub(crate) fn push_frame(&mut self, func: &hal_core::module::InternalFunction) {
-    //     let bottom = self.stack.len() - func.func_type.params.len();
-    //     let mut locals = self.stack.split_off(bottom);
-    //
-    //     for local in func.code.locals.iter() {
-    //         match local {
-    //             ValueType::I32 => locals.push(Value::I32(0)),
-    //             ValueType::I64 => locals.push(Value::I64(0)),
-    //         }
-    //     }
-    //
-    //     let arity = func.func_type.results.len();
-    //
-    //     let frame = Frame {
-    //         ip: -1,
-    //         sp: self.stack.len(),
-    //         instructions: func.code.body.clone(),
-    //         arity,
-    //         locals,
-    //     };
-    //
-    //     self.call_stack.push(frame);
-    // }
+    pub(crate) fn push_frame(&mut self, func: &FunctionLocal) {
+
+        let bottom = self.stack.len() - func.parameter_count();
+        let mut locals = self.stack.split_off(bottom);
+
+        for local in func.locals().iter() {
+            match local {
+                ValueType::I32 => locals.push(Value::I32(0)),
+                ValueType::I64 => locals.push(Value::I64(0)),
+            }
+        }
+
+        let arity = func.result_count();
+
+        let frame = Frame {
+            ip: -1,
+            sp: self.stack.len(),
+            instructions: func.instructions(),
+            arity,
+            locals: locals.into()
+        };
+
+        self.call_stack.push(frame);
+    }
 
     #[inline(always)]
     pub fn stack_unwind(&mut self) -> Result<(), Trap> {

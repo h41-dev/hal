@@ -1,6 +1,7 @@
 use alloc::boxed::Box;
 
-#[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(any(test, debug_assertions), derive(Debug))]
+#[derive(Clone, PartialEq)]
 pub enum ValueType {
     I32,
     I64,
@@ -8,7 +9,8 @@ pub enum ValueType {
 
 pub type ValueTypes = Box<[ValueType]>;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(any(test, debug_assertions), derive(Debug))]
+#[derive(Clone, PartialEq, Eq)]
 pub enum Value {
     I32(i32),
     I64(i64),

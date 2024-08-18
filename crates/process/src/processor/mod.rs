@@ -2,8 +2,10 @@ use alloc::string::String;
 use alloc::vec::Vec;
 use core::ops::ControlFlow;
 use core::ops::ControlFlow::Continue;
+use hal_core::module;
 
-use hal_core::module::Value;
+use hal_core::module::{ExportData, Function, FunctionIndex, Instruction, Value};
+use module::FunctionLocal;
 
 use crate::process::Process;
 use crate::Trap;
@@ -21,12 +23,144 @@ impl Default for Processor {
 }
 
 impl Processor {
+
+    fn execute(&self, process: &mut Process) -> Result<(), Trap>{
+        loop {
+            let Some(frame) = process.call_stack.last_mut() else {
+                break;
+            };
+
+            frame.ip += 1;
+
+            let Some(inst) = frame.instructions.get(frame.ip as usize) else {
+                break;
+            };
+
+            match inst {
+                Instruction::LocalGet(idx) => {
+                    let Some(value) = frame.locals.get(*idx as usize) else {
+                        panic!("not found local");
+                    };
+                    process.stack.push(value.clone());
+                }
+                Instruction::LocalSet(idx) => {
+                    let Some(value) = process.stack.pop() else {
+                        panic!("not found value in the stack");
+                    };
+                    let idx = *idx as usize;
+                    frame.locals[idx] = value;
+                }
+                Instruction::End => {
+                    process.stack_unwind().unwrap()
+                }
+                Instruction::ConstI32(value) => process.stack.push(Value::I32(*value)),
+                Instruction::StoreI32 { offset, idx: addr } => {
+                    let (Some(value), Some(addr)) = (process.stack.pop(), process.stack.pop()) else {
+                        panic!("not found any value in the stack");
+                    };
+                    let addr = Into::<i32>::into(addr) as usize;
+                    let offset = (*offset) as usize;
+                    let at = addr + offset;
+                    let end = at + size_of::<i32>();
+
+                    let memory = process
+                        .state
+                        .memories
+                        .get_mut(0)
+                        .ok_or(Trap::NotFoundMemory(0))
+                        .unwrap();
+
+                    let value: i32 = value.into();
+                    memory.data[at..end].copy_from_slice(&value.to_le_bytes());
+                }
+                Instruction::AddI32 => {
+                    let (Some(right), Some(left)) = (process.stack.pop(), process.stack.pop()) else {
+                        panic!("not found any value in the stack");
+                    };
+                    let result = left + right;
+                    process.stack.push(result);
+                }
+                Instruction::Invoke(idx) => {
+
+
+                    // let Some(func) = process.state.functions.get(*idx as usize) else {
+                    //     panic!("not found func");
+                    // };
+
+                    let func = process.state.function_ref(*idx).unwrap();
+
+                    // let func_inst = func.clone();
+                    // match func_inst {
+                    //     Function::Local(func) => {
+                    //         process.push_frame(func)
+                    //     },
+                    //     // Function::External(func) => {
+                    //     //     if let Some(value) = invoke_external(process, func.clone()).unwrap() {
+                    //     //         process.stack.push(value);
+                    //     //     }
+                    //     // }
+                    // }
+                }
+                _ => todo!()
+            }
+        }
+        Ok(())
+    }
+
+    fn try_complete() {
+
+    }
+
     #[inline(always)]
     fn next(&self, process: &mut Process) -> ControlFlow<Option<Trap>> {
         Continue(())
     }
 
-    pub fn invoke(&self, fiber: &mut Process, name: impl Into<String>, args: Vec<Value>) -> Result<Option<Value>, Trap> {
-        Ok(None)
+    pub fn invoke(&self, process: &mut Process, name: impl Into<String>, args: Vec<Value>) -> Result<Option<Value>, Trap> {
+        let name = name.into();
+
+        let idx = match process.state.export_ref(name.clone())
+            .or_else(|_| Err(Trap::NotFoundExportedFunction(name)))
+            .unwrap()
+            .data()
+        {
+            ExportData::Function(idx) => *idx as usize,
+        };
+
+        for arg in args {
+            process.stack.push(arg.clone());
+        }
+
+        // let func_inst = process.state.function_ref(idx as FunctionIndex).unwrap();
+        //
+        // match func_inst {
+        //     Function::Local(func) => invoke_internal(process, self, func),
+        //     // Function::External(func) => invoke_external(fiber, func.clone())
+        // }
+
+        let func_inst = match process.state.function_ref(idx as FunctionIndex).unwrap(){
+            Function::Local(local) => local.clone()
+        };
+
+        invoke_internal(process, self, func_inst)
     }
+}
+
+fn invoke_internal(process: &mut Process, engine: &Processor, func: FunctionLocal) -> Result<Option<Value>, Trap> {
+    let arity = func.result_count();
+
+    process.push_frame(&func);
+
+    if let Err(e) = engine.execute(process) {
+        // self.cleanup();
+        panic!("failed to execute instructions: {}", e)
+    };
+
+    if arity > 0 {
+        let Some(value) = process.stack.pop() else {
+            panic!("not found return value")
+        };
+        return Ok(Some(value));
+    }
+    Ok(None)
 }

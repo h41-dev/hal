@@ -1,6 +1,7 @@
 use crate::module::{FunctionIndex, LocalIndex, MemoryIndex, Offset, Value, ValueType};
 
 #[cfg_attr(any(test, debug_assertions), derive(Debug))]
+#[derive(Clone)]
 pub enum Instruction {
     AddI32,
 
@@ -8,8 +9,7 @@ pub enum Instruction {
 
     End,
 
-    // Invokes a local function
-    InvokeLocal(FunctionIndex),
+    Invoke(FunctionIndex),
 
     LocalGet(LocalIndex),
 
