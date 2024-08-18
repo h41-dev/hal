@@ -1,4 +1,5 @@
 use alloc::boxed::Box;
+use alloc::rc::Rc;
 use alloc::string::{String, ToString};
 
 use hal_core::module;
@@ -31,7 +32,7 @@ impl core::fmt::Display for ProcessStateError {
 // FIXME
 #[cfg_attr(any(test, debug_assertions), derive(Debug))]
 pub struct ProcessState {
-    pub functions: Box<[Function]>,
+    pub functions: Box<[Rc<Function>]>,
     pub exports: Box<[Export]>,
     pub memories: Box<[Memory]>,
 }
@@ -46,8 +47,8 @@ impl ProcessState {
         })
     }
 
-    pub fn function_ref(&self, idx: FunctionIndex) -> Result<&Function, Trap> {
-        self.functions.get(idx as usize).ok_or(Trap::NotFoundLocalFunction(idx))
+    pub fn get_function(&self, idx: FunctionIndex) -> Result<Rc<Function>, Trap> {
+        self.functions.get(idx as usize).ok_or(Trap::NotFoundLocalFunction(idx)).map(|rc| rc.clone())
     }
 
     pub fn export_ref(&self, name: impl Into<String>) -> Result<&Export, Trap> {

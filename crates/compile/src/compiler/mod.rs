@@ -1,4 +1,5 @@
 use alloc::boxed::Box;
+use alloc::rc::Rc;
 use alloc::string::ToString;
 use alloc::vec;
 use alloc::vec::Vec;
@@ -41,7 +42,7 @@ impl Compiler {
         };
 
         let mut exports: Vec<Export> = vec![];
-        let mut functions: Vec<Function> = vec![];
+        let mut functions: Vec<Rc<Function>> = vec![];
         let mut memories: Vec<Memory> = vec![];
 
         // if let ref import_section = wasm.imports {
@@ -94,7 +95,7 @@ impl Compiler {
                 }
 
                 functions.push(
-                    Function::local(
+                    Rc::new(Function::local(
                         FunctionSignature::new(
                             func_type.params.iter().map(|p| ValueType::from(p)).collect::<Vec<_>>().into(),
                             func_type.returns.iter().map(|r| ValueType::from(r)).collect::<Vec<_>>().into(),
@@ -112,7 +113,7 @@ impl Compiler {
                                     WasmInstruction::Call(addr) => Instruction::Invoke(addr.clone())
                                 }
                             }).collect(),
-                    )
+                    ))
                 )
 
                 // let func = hal_core::module::LocalFunctionData {

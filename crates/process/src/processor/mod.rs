@@ -1,3 +1,4 @@
+use alloc::rc::Rc;
 use alloc::string::String;
 use alloc::vec::Vec;
 use core::ops::ControlFlow;
@@ -87,7 +88,7 @@ impl Processor {
                     //     panic!("not found func");
                     // };
 
-                    let func = process.state.function_ref(*idx).unwrap();
+                    let func = process.state.get_function(*idx).unwrap();
 
                     // let func_inst = func.clone();
                     // match func_inst {
@@ -137,19 +138,19 @@ impl Processor {
         //     Function::Local(func) => invoke_internal(process, self, func),
         //     // Function::External(func) => invoke_external(fiber, func.clone())
         // }
-
-        let func_inst = match process.state.function_ref(idx as FunctionIndex).unwrap(){
-            Function::Local(local) => local.clone()
+        let function = process.state.get_function(idx as FunctionIndex).unwrap();
+        let func_inst = match & *function {
+            Function::Local(local) => local
         };
 
         invoke_internal(process, self, func_inst)
     }
 }
 
-fn invoke_internal(process: &mut Process, engine: &Processor, func: FunctionLocal) -> Result<Option<Value>, Trap> {
+fn invoke_internal(process: &mut Process, engine: &Processor, func: &FunctionLocal) -> Result<Option<Value>, Trap> {
     let arity = func.result_count();
 
-    process.push_frame(&func);
+    process.push_frame(func);
 
     if let Err(e) = engine.execute(process) {
         // self.cleanup();

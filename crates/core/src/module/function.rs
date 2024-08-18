@@ -4,7 +4,6 @@ use crate::module::{ValueType, ValueTypes};
 use crate::module::instruction::Instruction;
 
 #[cfg_attr(any(test, debug_assertions), derive(Debug))]
-#[derive(Clone)] // FIXME get rid of this
 pub struct FunctionSignature {
     params: ValueTypes,
     results: ValueTypes,
@@ -35,7 +34,6 @@ impl Function {
 }
 
 #[cfg_attr(any(test, debug_assertions), derive(Debug))]
-#[derive(Clone)] // FIXME this is immutable data there should never be a reason to clone it
 pub struct FunctionLocal {
     signature: FunctionSignature,
     locals: ValueTypes,
