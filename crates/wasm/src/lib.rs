@@ -4,9 +4,12 @@
 
 extern crate alloc;
 
-use crate::error::WasmParseError;
+pub use crate::error::WasmParseError;
+pub use crate::parse::WasmParser;
+pub use crate::module::*;
 
 pub mod reader;
+
 mod error;
 mod module;
 mod parse;

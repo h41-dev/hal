@@ -1,7 +1,7 @@
 use alloc::boxed::Box;
 use alloc::string::String;
 
-pub(crate) use instruction::WasmInstruction;
+pub use instruction::WasmInstruction;
 pub(crate) use opcode::Opcode;
 
 mod instruction;
