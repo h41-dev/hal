@@ -1,14 +1,19 @@
 use hal_compile::Compiler;
 use hal_process::Processor;
+pub use load::{LoadWasm, LoadWat};
+pub use spawn::{SpawnWasm, SpawnWat};
 
-pub struct Single {
+mod load;
+mod spawn;
+
+pub struct SingleThreadedEnvironment {
     pub(crate) compiler: Compiler,
     pub(crate) processor: Processor,
 }
 
-impl Single {}
+impl SingleThreadedEnvironment {}
 
-impl Default for Single {
+impl Default for SingleThreadedEnvironment {
     fn default() -> Self {
         Self {
             compiler: Compiler::default(),

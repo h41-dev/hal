@@ -1,5 +1,6 @@
 use crate::module::{FunctionIndex, LocalIndex, MemoryIndex, Offset, Value, ValueType};
 
+#[cfg_attr(any(test, debug_assertions), derive(Debug))]
 pub enum Instruction {
     AddI32,
 

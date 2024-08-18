@@ -2,7 +2,12 @@
 #![warn(missing_docs, missing_debug_implementations, rust_2018_idioms, unreachable_pub)]
 #![forbid(unsafe_code)]
 
-mod env;
-
-extern crate core;
 extern crate alloc;
+extern crate core;
+
+pub use env::single_threaded::{LoadWasm, LoadWat, SingleThreadedEnvironment, SpawnWasm, SpawnWat};
+pub use env::source::*;
+pub use handle::Handle;
+
+mod env;
+mod handle;

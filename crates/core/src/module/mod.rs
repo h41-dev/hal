@@ -1,6 +1,7 @@
 pub use crate::module ::export::*;
 pub use crate::module::index::*;
 pub use crate::module::value::*;
+pub use crate::module::instruction::*;
 
 
 mod index;
