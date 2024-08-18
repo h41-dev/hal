@@ -1,0 +1,10 @@
+[package]
+name = "hal-compile"
+version.workspace = true
+rust-version.workspace = true
+edition.workspace = true
+
+[dependencies]
+hal-core = { path = "../core"}
+hal-wasm = { path = "../wasm" }
+hal-wat = { path = "../wat" }

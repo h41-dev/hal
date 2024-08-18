@@ -1,0 +1,24 @@
+[workspace.package]
+authors = ["Dominique <dominique@hal.dev>"]
+description = "WebAssembly runtime"
+homepage = "https://hal.dev"
+repository = "https://github.com/scarabsoft/hal"
+readme = "readme.md"
+keywords = ["wasm", "webassembly", "runtime", "wat"]
+categories = ["wasm"]
+
+version = "0.0.1"
+rust-version = "1.80.0"
+edition = "2021"
+
+[workspace]
+resolver = "2"
+members = [
+    "crates/compile",
+    "crates/core",
+    "crates/env",
+    "crates/process",
+    "crates/wasm",
+    "crates/wat"
+]
+

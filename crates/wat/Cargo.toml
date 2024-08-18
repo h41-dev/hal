@@ -1,0 +1,8 @@
+[package]
+name = "hal-wat"
+version.workspace = true
+rust-version.workspace = true
+edition.workspace = true
+
+[dependencies]
+wat-delegate = { package = "wat", version = "1.215.0" }

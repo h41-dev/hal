@@ -1,0 +1,12 @@
+[package]
+name = "hal-env"
+version.workspace = true
+rust-version.workspace = true
+edition.workspace = true
+
+[dependencies]
+hal-compile = { path = "../compile" }
+hal-core = { path = "../core" }
+hal-process = { path = "../process" }
+hal-wasm = { path = "../wasm" }
+hal-wat = { path = "../wat" }

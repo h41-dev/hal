@@ -1,0 +1,8 @@
+[package]
+name = "hal-process"
+version.workspace = true
+rust-version.workspace = true
+edition.workspace = true
+
+[dependencies]
+hal-core = { path = "../core" }
