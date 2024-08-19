@@ -1,6 +1,8 @@
 use alloc::boxed::Box;
 use alloc::rc::Rc;
-use alloc::string::{String, ToString};
+use alloc::string::String;
+use alloc::vec::Vec;
+use core::cell::RefCell;
 
 use hal_core::module;
 use hal_core::module::{Export, FunctionIndex, Memory, MemoryIndex};
@@ -29,21 +31,37 @@ impl core::fmt::Display for ProcessStateError {
     }
 }
 
-// FIXME
 #[cfg_attr(any(test, debug_assertions), derive(Debug))]
 pub struct ProcessState {
-    pub functions: Box<[Rc<Function>]>,
-    pub exports: Box<[Export]>,
-    pub memories: Box<[Memory]>,
+    functions: Box<[Rc<Function>]>,
+    exports: Box<[Rc<Export>]>,
+    memories: Box<[Rc<Memory>]>,
 }
 
 // FIXME own representation -- load from compiled module
 impl ProcessState {
     pub fn new(module: Module) -> Result<Self, ProcessStateError> {
         Ok(Self {
-            functions: module.functions,
-            exports: module.exports,
-            memories: module.memories,
+            functions: module.functions
+                .into_vec()
+                .into_iter()
+                .map(Rc::new)
+                .collect::<Vec<_>>()
+                .into_boxed_slice(),
+
+            exports: module.exports
+                .into_vec()
+                .into_iter()
+                .map(Rc::new)
+                .collect::<Vec<_>>()
+                .into_boxed_slice(),
+
+            memories: module.memories
+                .into_vec()
+                .into_iter()
+                .map(Rc::new)
+                .collect::<Vec<_>>()
+                .into_boxed_slice(),
         })
     }
 
@@ -51,9 +69,15 @@ impl ProcessState {
         self.functions.get(idx as usize).ok_or(Trap::NotFoundLocalFunction(idx)).map(|rc| rc.clone())
     }
 
-    pub fn export_ref(&self, name: impl Into<String>) -> Result<&Export, Trap> {
-        let name= name.into();
+    pub fn get_export(&self, name: impl Into<String>) -> Result<Rc<Export>, Trap> {
+        let name = name.into();
         self.exports.iter().find(|export| export.name().eq(&name))
+            .map(|rc| rc.clone())
             .ok_or(Trap::NotFoundExportedFunction(name))
     }
+
+    pub fn get_memory(&self, idx: MemoryIndex) -> Result<Rc<Memory>, Trap> {
+        self.memories.get(idx as usize).ok_or(Trap::NotFoundMemory(idx)).map(|rc| rc.clone())
+    }
+
 }

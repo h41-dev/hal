@@ -66,13 +66,11 @@ impl Processor {
 
                     let memory = process
                         .state
-                        .memories
-                        .get_mut(0)
-                        .ok_or(Trap::NotFoundMemory(0))
+                        .get_memory(0)
                         .unwrap();
 
                     let value: i32 = value.into();
-                    memory.data[at..end].copy_from_slice(&value.to_le_bytes());
+                    memory.data.borrow_mut()[at..end].copy_from_slice(&value.to_le_bytes());
                 }
                 Instruction::AddI32 => {
                     let (Some(right), Some(left)) = (process.stack.pop(), process.stack.pop()) else {
@@ -120,7 +118,7 @@ impl Processor {
     pub fn invoke(&self, process: &mut Process, name: impl Into<String>, args: Vec<Value>) -> Result<Option<Value>, Trap> {
         let name = name.into();
 
-        let idx = match process.state.export_ref(name.clone())
+        let idx = match process.state.get_export(name.clone())
             .or_else(|_| Err(Trap::NotFoundExportedFunction(name)))
             .unwrap()
             .data()

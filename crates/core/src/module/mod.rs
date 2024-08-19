@@ -20,14 +20,14 @@ pub type Offset = u32;
 
 pub struct Module {
     pub exports: Box<[Export]>,
-    pub functions: Box<[Rc<Function>]>,
+    pub functions: Box<[Function]>,
     pub memories: Box<[Memory]>,
 }
 
 impl Module {
     pub fn new(
         exports: Box<[Export]>,
-        functions: Box<[Rc<Function>]>,
+        functions: Box<[Function]>,
         memories: Box<[Memory]>,
     ) -> Self {
         Self {
