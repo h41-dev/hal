@@ -12,7 +12,7 @@ pub struct Handle<'processor> {
 
 impl<'runtime> Handle<'runtime> {
 
-    pub fn invoke(&mut self, name: impl Into<String>, args: Vec<Value>) -> Result<Option<Value>, Trap> {
+    pub fn invoke(&mut self, name: impl Into<String>, args: impl AsRef<[Value]>) -> Result<Option<Value>, Trap> {
         // FIXME instead of invoking process directly there should be a mailbox
         let process = &mut self.process;
         self.processor.invoke(process, name, args)

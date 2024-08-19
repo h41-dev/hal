@@ -65,18 +65,18 @@ impl ProcessState {
         })
     }
 
-    pub fn get_function(&self, idx: FunctionIndex) -> Result<Rc<Function>, Trap> {
+    pub fn function(&self, idx: FunctionIndex) -> Result<Rc<Function>, Trap> {
         self.functions.get(idx as usize).ok_or(Trap::NotFoundLocalFunction(idx)).map(|rc| rc.clone())
     }
 
-    pub fn get_export(&self, name: impl Into<String>) -> Result<Rc<Export>, Trap> {
+    pub fn export(&self, name: impl Into<String>) -> Result<Rc<Export>, Trap> {
         let name = name.into();
         self.exports.iter().find(|export| export.name().eq(&name))
             .map(|rc| rc.clone())
             .ok_or(Trap::NotFoundExportedFunction(name))
     }
 
-    pub fn get_memory(&self, idx: MemoryIndex) -> Result<Rc<Memory>, Trap> {
+    pub fn memory(&self, idx: MemoryIndex) -> Result<Rc<Memory>, Trap> {
         self.memories.get(idx as usize).ok_or(Trap::NotFoundMemory(idx)).map(|rc| rc.clone())
     }
 
