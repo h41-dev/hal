@@ -3,7 +3,8 @@ use core::ops::ControlFlow;
 use core::ops::ControlFlow::Continue;
 
 use hal_core::module;
-use hal_core::module::{ExportData, Function, FunctionIndex, Instruction, Value};
+use hal_core::module::{ExportData, Function, Instruction, MemoryAddress, Value};
+use hal_core::module::FunctionAddress;
 use module::FunctionLocal;
 
 use crate::process::Process;
@@ -35,25 +36,25 @@ impl Processor {
             };
 
             match inst {
-                Instruction::LocalGet(idx) => {
-                    let Some(value) = frame.locals.get(*idx as usize) else {
+                Instruction::LocalGet(addr) => {
+                    let Some(value) = frame.locals.get(*addr as usize) else {
                         panic!("not found local");
                     };
                     process.stack.push(value.clone());
                 }
-                Instruction::LocalSet(idx) => {
+                Instruction::LocalSet(addr) => {
                     let Some(value) = process.stack.pop() else {
                         panic!("not found value in the stack");
                     };
-                    let idx = *idx as usize;
-                    frame.locals[idx] = value;
+                    let addr = *addr as usize;
+                    frame.locals[addr] = value;
                 }
                 Instruction::End => {
                     process.stack_unwind().unwrap()
                 }
                 Instruction::ConstI32(value) => process.stack.push(Value::I32(*value)),
                 Instruction::ConstI64(value) => process.stack.push(Value::I64(*value)),
-                Instruction::StoreI32 { offset, idx: addr } => {
+                Instruction::StoreI32 { flag: _, offset } => {
                     let (Some(value), Some(addr)) = (process.stack.pop(), process.stack.pop()) else {
                         panic!("not found any value in the stack");
                     };
@@ -64,29 +65,13 @@ impl Processor {
 
                     let memory = process
                         .state
-                        .memory(0)
+                        .memory(addr as MemoryAddress)
                         .unwrap();
 
                     let value: i32 = value.into();
                     memory.data.borrow_mut()[at..end].copy_from_slice(&value.to_le_bytes());
                 }
-                Instruction::StoreI64 { offset, idx: addr } => {
-                    let (Some(value), Some(addr)) = (process.stack.pop(), process.stack.pop()) else {
-                        panic!("not found any value in the stack");
-                    };
-                    let addr = Into::<i32>::into(addr) as usize;
-                    let offset = (*offset) as usize;
-                    let at = addr + offset;
-                    let end = at + size_of::<i64>();
 
-                    let memory = process
-                        .state
-                        .memory(0)
-                        .unwrap();
-
-                    let value: i64 = value.into();
-                    memory.data.borrow_mut()[at..end].copy_from_slice(&value.to_le_bytes());
-                }
                 Instruction::AddI32 => {
                     let (Some(right), Some(left)) = (process.stack.pop(), process.stack.pop()) else {
                         panic!("not found any value in the stack");
@@ -101,8 +86,8 @@ impl Processor {
                     let result = left + right;
                     process.stack.push(result);
                 }
-                Instruction::Invoke(idx) => {
-                    let function = process.state.function(*idx).unwrap();
+                Instruction::Invoke(addr) => {
+                    let function = process.state.function(*addr).unwrap();
                     let func_inst = match &*function {
                         Function::Local(local) => process.push_frame(local)
                     };
@@ -144,7 +129,7 @@ impl Processor {
         //     Function::Local(func) => invoke_internal(process, self, func),
         //     // Function::External(func) => invoke_external(fiber, func.clone())
         // }
-        let function = process.state.function(idx as FunctionIndex).unwrap();
+        let function = process.state.function(idx as FunctionAddress).unwrap();
         let func_inst = match &*function {
             Function::Local(local) => local
         };

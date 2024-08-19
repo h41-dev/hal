@@ -9,22 +9,22 @@ pub(crate) fn parse_instruction(reader: &ByteReader) -> Result<WasmInstruction> 
     let op = Opcode::from_u8(op)?;
     Ok(match op {
         Opcode::LocalGet => {
-            let idx = reader.read_leb128_u32()?;
-            WasmInstruction::LocalGet(idx)
+            let addr = reader.read_leb128_u32()?;
+            WasmInstruction::LocalGet(addr)
         }
         Opcode::LocalSet => {
-            let idx = reader.read_leb128_u32()?;
-            WasmInstruction::LocalSet(idx)
+            let addr = reader.read_leb128_u32()?;
+            WasmInstruction::LocalSet(addr)
         }
         Opcode::I32Store => {
+            let flag = reader.read_leb128_u32()?;
             let offset = reader.read_leb128_u32()?;
-            let idx = reader.read_leb128_u32()?;
-            WasmInstruction::I32Store { offset, idx }
+            WasmInstruction::I32Store { flag , offset }
         }
         Opcode::I32Store => {
+            let flag = reader.read_leb128_u32()?;
             let offset = reader.read_leb128_u32()?;
-            let idx = reader.read_leb128_u32()?;
-            WasmInstruction::I64Store { offset, idx }
+            WasmInstruction::I64Store { flag, offset}
         }
         Opcode::I32Const => {
             let value = reader.read_leb128_i32()?;
@@ -34,8 +34,8 @@ pub(crate) fn parse_instruction(reader: &ByteReader) -> Result<WasmInstruction> 
         Opcode::I64Add => WasmInstruction::I64Add,
         Opcode::End => WasmInstruction::End,
         Opcode::Call => {
-            let idx = reader.read_leb128_u32()?;
-            WasmInstruction::Call(idx)
+            let addr = reader.read_leb128_u32()?;
+            WasmInstruction::Call(addr)
         }
         _ => todo!("opcode not supported yet: {:?}", op)
     })
@@ -58,8 +58,8 @@ mod tests {
                 code: Box::new([
                     WasmInstruction::I32Const(4),
                     WasmInstruction::I32Store {
-                        offset: 2,
-                        idx: 4,
+                        flag: 2,
+                        offset: 4,
                     },
                     WasmInstruction::End,
                 ]),

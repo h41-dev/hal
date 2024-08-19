@@ -1,4 +1,8 @@
-use crate::module::{FunctionIndex, LocalIndex, MemoryIndex, Offset, Value, ValueType};
+use crate::module::memory::MemoryOffset;
+use crate::module::function::FunctionAddress;
+use crate::module::function::LocalAddress;
+use crate::module::memory::MemoryAddress;
+use crate::module::MemoryFlag;
 
 #[cfg_attr(any(test, debug_assertions), derive(Debug))]
 #[derive(Clone)]
@@ -11,14 +15,14 @@ pub enum Instruction {
 
     End,
 
-    Invoke(FunctionIndex),
+    Invoke(FunctionAddress),
 
-    LocalGet(LocalIndex),
+    LocalGet(LocalAddress),
 
-    LocalSet(LocalIndex),
+    LocalSet(LocalAddress),
 
-    StoreI32 { offset: Offset, idx: MemoryIndex },
-    StoreI64 { offset: Offset, idx: MemoryIndex },
+    StoreI32 { flag: MemoryFlag, offset: MemoryOffset },
+    StoreI64 { flag: MemoryFlag, offset: MemoryOffset },
 }
 
 

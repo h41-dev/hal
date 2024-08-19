@@ -18,8 +18,8 @@ pub(crate) fn parse_import_section(size: u32, reader: &ByteReader) -> Result<Box
         let import_kind = reader.read_u8()?;
         let desc = match import_kind {
             0x00 => {
-                let idx = reader.read_leb128_u32()?;
-                Ok(WasmImportDescriptor::Func(idx))
+                let addr = reader.read_leb128_u32()?;
+                Ok(WasmImportDescriptor::Func(addr))
             }
             _ => Err(WasmParseError::InvalidImportDescriptor(import_kind)),
         }?;

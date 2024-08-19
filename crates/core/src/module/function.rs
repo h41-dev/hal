@@ -1,7 +1,11 @@
 use alloc::boxed::Box;
 
-use crate::module::{ValueType, ValueTypes};
+use crate::module::{ ValueType, ValueTypes};
 use crate::module::instruction::Instruction;
+
+pub type LocalAddress = u32;
+pub type FunctionAddress = u32;
+
 
 #[cfg_attr(any(test, debug_assertions), derive(Debug))]
 pub struct FunctionSignature {
@@ -53,3 +57,4 @@ impl FunctionLocal {
 
     pub fn instructions(&self) -> Box<[Instruction]> { Box::from(self.instructions.clone()) }
 }
+

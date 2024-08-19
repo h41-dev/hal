@@ -1,17 +1,17 @@
 use alloc::string::String;
 use core::fmt::{Display, Formatter};
-use hal_core::module::{FunctionIndex, MemoryIndex};
-use crate::process::state::ProcessStateError;
+use hal_core::module::MemoryAddress;
+use hal_core::module::FunctionAddress;
 
 #[cfg_attr(any(test, debug_assertions), derive(Debug))]
 pub enum Trap{
     NotFoundExportedFunction(String),
     NotFoundFunction(String),
-    NotFoundMemory(MemoryIndex),
+    NotFoundMemory(MemoryAddress),
     NotFoundModule(String),
     NotFoundReturnValue,
 
-    NotFoundLocalFunction(FunctionIndex),
+    NotFoundLocalFunction(FunctionAddress),
 }
 
 impl Display for Trap{

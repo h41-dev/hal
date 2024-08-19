@@ -1,7 +1,7 @@
+use alloc::rc::Rc;
 use alloc::string::String;
-use alloc::vec::Vec;
-
-use hal_core::module::Value;
+use hal_core::module::{Memory, Value};
+use hal_core::module::MemoryAddress;
 use hal_process::{Process, Processor, Trap};
 
 #[cfg_attr(any(test, debug_assertions), derive(Debug))]
@@ -16,6 +16,10 @@ impl<'runtime> Handle<'runtime> {
         // FIXME instead of invoking process directly there should be a mailbox
         let process = &mut self.process;
         self.processor.invoke(process, name, args)
+    }
+
+    pub fn memory(&self, idx: MemoryAddress) -> Result<Rc<Memory>, Trap> {
+        self.process.state.memory(idx)
     }
 
 }

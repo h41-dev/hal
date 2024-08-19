@@ -1,3 +1,4 @@
-mod numeric;
 mod invoke;
+mod memory;
+mod numeric;
 

@@ -35,8 +35,8 @@ impl Compiler {
     }
 
     pub fn compile(&self, wasm: hal_wasm::WasmModule) -> Result<Module, CompilationError> {
-        let func_type_idxs = match wasm.functions {
-            ref idxs => idxs.clone(),
+        let func_type_addrs = match wasm.functions {
+            ref addr => addr.clone(),
             _ => Box::default()
         };
 
@@ -77,7 +77,7 @@ impl Compiler {
         // }
 
         if let ref code_section = wasm.codes {
-            for (func_body, type_idx) in code_section.iter().zip(func_type_idxs.into_iter()) {
+            for (func_body, type_idx) in code_section.iter().zip(func_type_addrs.into_iter()) {
                 let ref func_types = wasm.types else {
                     panic!("not found type_section")
                 };
@@ -105,8 +105,8 @@ impl Compiler {
                                 match i {
                                     WasmInstruction::LocalGet(addr) => Instruction::LocalGet(addr.clone()),
                                     WasmInstruction::LocalSet(addr) => Instruction::LocalSet(addr.clone()),
-                                    WasmInstruction::I32Store { offset, idx } => Instruction::StoreI32 { offset: offset.clone(), idx: idx.clone() },
-                                    WasmInstruction::I64Store { offset, idx } => Instruction::StoreI64 { offset: offset.clone(), idx: idx.clone() },
+                                    WasmInstruction::I32Store { flag, offset } => Instruction::StoreI32 { flag: flag.clone(), offset: offset.clone() },
+                                    WasmInstruction::I64Store { flag, offset } => Instruction::StoreI64 { flag: flag.clone(), offset: offset.clone() },
                                     WasmInstruction::I32Const(value) => Instruction::ConstI32(value.clone()),
                                     WasmInstruction::I64Const(value) => Instruction::ConstI64(value.clone()),
                                     WasmInstruction::End => Instruction::End,

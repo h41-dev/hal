@@ -280,8 +280,8 @@ mod tests {
                     WasmInstruction::I32Const(0),
                     WasmInstruction::I32Const(42),
                     WasmInstruction::I32Store {
-                        offset: 2,
-                        idx: 0,
+                        flag: 2,
+                        offset: 0,
                     },
                     WasmInstruction::End,
                 ]),

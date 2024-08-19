@@ -14,9 +14,9 @@ pub(crate) fn parse_export_section(size: u32, reader: &ByteReader) -> Result<Box
     for _ in 0..count {
         let name = parse_name(reader)?;
         let export_kind = reader.read_u8()?;
-        let idx = reader.read_leb128_u32()?;
+        let addr = reader.read_leb128_u32()?;
         let desc = match export_kind {
-            0x00 => Ok(WasmExportDescriptor::Func(idx)),
+            0x00 => Ok(WasmExportDescriptor::Func(addr)),
             _ => Err(InvalidExportDescriptor(export_kind)),
         }?;
         result.push(WasmExport { name, desc });

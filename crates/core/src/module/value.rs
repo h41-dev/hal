@@ -35,6 +35,15 @@ pub enum Value {
     I64(i64),
 }
 
+impl Display for Value {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        match self {
+            Value::I32(v) => write!(f, "{}", v),
+            Value::I64(v) => write!(f, "{}", v)
+        }
+    }
+}
+
 impl From<i32> for Value {
     fn from(value: i32) -> Self {
         Value::I32(value)

@@ -1,6 +1,6 @@
 use alloc::string::String;
 
-use crate::module::FunctionIndex;
+use crate::module::function::FunctionAddress;
 
 #[cfg_attr(any(test, debug_assertions), derive(Debug))]
 pub struct Export {
@@ -9,10 +9,10 @@ pub struct Export {
 }
 
 impl Export {
-    pub fn function(name: String, idx: FunctionIndex) -> Self {
+    pub fn function(name: String, addr: FunctionAddress) -> Self {
         Self {
             name,
-            data: ExportData::Function(idx),
+            data: ExportData::Function(addr),
         }
     }
 
@@ -27,5 +27,5 @@ impl Export {
 
 #[cfg_attr(any(test, debug_assertions), derive(Debug))]
 pub enum ExportData {
-    Function(FunctionIndex),
+    Function(FunctionAddress),
 }
