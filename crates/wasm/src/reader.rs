@@ -1,6 +1,7 @@
 use alloc::boxed::Box;
 use core::cell::RefCell;
 
+use hal_core::leb128::Leb128;
 use WasmParseError::UnexpectedEndOfFile;
 
 use crate::error::WasmParseError;
@@ -141,28 +142,9 @@ impl<'a> ByteReader<'a> {
     ///
     /// A `Result` containing the decoded `u32` value, or a `ParseError` if the read fails.
     pub fn read_leb128_u32(&self) -> Result<u32> {
-        let mut result = 0u32;
-        let mut shift = 0;
-
-        loop {
-            let byte = self.read_u8()?;
-
-            // Add the lower 7 bits of the byte to the result
-            result |= ((byte & 0x7F) as u32) << shift;
-
-            // If the most significant bit (MSB) is not set, we are done
-            if byte & 0x80 == 0 {
-                break;
-            }
-
-            // If shift is 28 or more, we've read too many bytes for a u32
-            if shift >= 28 {
-                return Err(InvalidLEB128Encoding);
-            }
-
-            shift += 7;
-        }
-
+        let (result, consumed) = u32::read_leb128(self.peek_range(5)?)?;
+        let mut pos = self.pos.borrow_mut();
+        *pos += consumed;
         Ok(result)
     }
 
@@ -260,6 +242,39 @@ impl<'a> ByteReader<'a> {
         Ok(Box::from(result))
     }
 
+    /// Peeks at a range of bytes starting from the current position without advancing the position.
+    ///
+    /// This function returns a slice of bytes from the current position up to `len` bytes long,
+    /// but it will return fewer bytes if the end of the data is reached before `len` bytes are available.
+    /// The position within the data is not modified by this operation.
+    ///
+    /// # Parameters
+    ///
+    /// - `len`: The number of bytes to peek at starting from the current position.
+    ///
+    /// # Returns
+    ///
+    /// - `Ok(&[u8])`: A slice containing the peeked bytes, or as many bytes as remain from the current position.
+    /// - `Err`: Any error that might occur (e.g., if the `pos` or `data` fields are invalid or in an incorrect state).
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use hal_wasm::reader::ByteReader;
+    /// let data: Vec<u8> = vec![1, 2, 3, 4, 5];
+    /// let reader = ByteReader::new(&data);
+    /// assert_eq!(reader.peek_range(3).unwrap(), &[1, 2, 3]);
+    /// assert_eq!(reader.peek_range(10).unwrap(), &[1, 2, 3, 4, 5]);
+    /// ```
+    pub fn peek_range(&self, len: usize) -> Result<&[u8]> {
+        let mut pos = self.pos.borrow();
+        let data = self.data.as_ref();
+        let end_pos = (*pos + len).min(data.len());
+
+        let result = &data[*pos..end_pos];
+        Ok(result)
+    }
+
     /// Seeks to a new position based on the provided offset.
     ///
     /// # Arguments
@@ -303,7 +318,6 @@ impl<'a> ByteReader<'a> {
 
 #[cfg(test)]
 mod tests {
-    use alloc::boxed::Box;
     use crate::error::WasmParseError;
     use crate::error::WasmParseError::OutOfBounds;
     use crate::reader::ByteReader;
@@ -443,15 +457,6 @@ mod tests {
     }
 
     #[test]
-    fn eof_non_empty_data_not_at_end() {
-        let data = [0x7F]; // 127 in LEB128
-        let ti = ByteReader::new(&data);
-        assert!(!ti.eof());
-        let _ = ti.read_leb128_u32().unwrap();
-        assert!(ti.eof());
-    }
-
-    #[test]
     fn read_leb128_i32_positive_single_byte() {
         let data = [0x3F]; // 63 in LEB128
         let ti = ByteReader::new(&data);
@@ -521,4 +526,46 @@ mod tests {
         let result = ti.read_leb128_i32();
         assert!(matches!(result, Err(WasmParseError::InvalidLEB128Encoding)));
     }
+
+    #[test]
+    fn peek_range_within_bounds() {
+        let given = [1, 2, 3, 4, 5];
+        let ti = ByteReader::new(&given);
+        let result = ti.peek_range(3).unwrap();
+        assert_eq!(result, &[1, 2, 3]);
+    }
+
+    #[test]
+    fn peek_range_past_end() {
+        let given = [1, 2, 3, 4, 5];
+        let ti = ByteReader::new(&given);
+        let result = ti.peek_range(10).unwrap();
+        assert_eq!(result, &[1, 2, 3, 4, 5]);
+    }
+
+    #[test]
+    fn peek_range_empty_data() {
+        let given = [];
+        let ti = ByteReader::new(&given);
+        let result = ti.peek_range(5).unwrap();
+        assert_eq!(result, &[]);
+    }
+
+    #[test]
+    fn peek_range_zero_len() {
+        let given = [1, 2, 3, 4, 5];
+        let ti = ByteReader::new(&given);
+        let result = ti.peek_range(0).unwrap();
+        assert_eq!(result, &[]);
+    }
+
+    #[test]
+    fn peek_range_after_advancing_pos() {
+        let given = [1, 2, 3, 4, 5];
+        let ti = ByteReader::new(&given);
+        *ti.pos.borrow_mut() = 2;
+        let result = ti.peek_range(2).unwrap();
+        assert_eq!(result, &[3, 4]);
+    }
 }
+

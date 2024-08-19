@@ -1,3 +1,5 @@
+use hal_core::leb128::Leb128EncodingError;
+
 #[cfg_attr(any(test, debug_assertions), derive(Debug))]
 #[derive(PartialEq)]
 pub enum WasmParseError {
@@ -46,6 +48,15 @@ impl core::fmt::Display for WasmParseError {
             // DecodingError::UnknownSection(section_id) => write!(f, "Unknown section ID: {}", section_id),
             // DecodingError::UnsupportedFeature(feature) => write!(f, "Unsupported feature: {}", feature),
             // DecodingError::Custom(msg) => write!(f, "{}", msg),
+        }
+    }
+}
+
+impl From<Leb128EncodingError> for WasmParseError {
+    fn from(e: Leb128EncodingError) -> Self {
+        match e {
+            Leb128EncodingError::InvalidEncoding => WasmParseError::InvalidLEB128Encoding,
+            Leb128EncodingError::IncompleteEncoding => WasmParseError::UnexpectedEndOfFile
         }
     }
 }

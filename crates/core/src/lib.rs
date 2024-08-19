@@ -7,3 +7,4 @@ extern crate alloc;
 
 pub mod module;
 pub mod constant;
+pub mod leb128;
