@@ -52,6 +52,7 @@ impl Processor {
                     process.stack_unwind().unwrap()
                 }
                 Instruction::ConstI32(value) => process.stack.push(Value::I32(*value)),
+                Instruction::ConstI64(value) => process.stack.push(Value::I64(*value)),
                 Instruction::StoreI32 { offset, idx: addr } => {
                     let (Some(value), Some(addr)) = (process.stack.pop(), process.stack.pop()) else {
                         panic!("not found any value in the stack");
@@ -69,7 +70,31 @@ impl Processor {
                     let value: i32 = value.into();
                     memory.data.borrow_mut()[at..end].copy_from_slice(&value.to_le_bytes());
                 }
+                Instruction::StoreI64 { offset, idx: addr } => {
+                    let (Some(value), Some(addr)) = (process.stack.pop(), process.stack.pop()) else {
+                        panic!("not found any value in the stack");
+                    };
+                    let addr = Into::<i32>::into(addr) as usize;
+                    let offset = (*offset) as usize;
+                    let at = addr + offset;
+                    let end = at + size_of::<i64>();
+
+                    let memory = process
+                        .state
+                        .memory(0)
+                        .unwrap();
+
+                    let value: i64 = value.into();
+                    memory.data.borrow_mut()[at..end].copy_from_slice(&value.to_le_bytes());
+                }
                 Instruction::AddI32 => {
+                    let (Some(right), Some(left)) = (process.stack.pop(), process.stack.pop()) else {
+                        panic!("not found any value in the stack");
+                    };
+                    let result = left + right;
+                    process.stack.push(result);
+                }
+                Instruction::AddI64 => {
                     let (Some(right), Some(left)) = (process.stack.pop(), process.stack.pop()) else {
                         panic!("not found any value in the stack");
                     };

@@ -1,1 +1,2 @@
-mod exported_invokes_local;
+mod multiple;
+mod local;

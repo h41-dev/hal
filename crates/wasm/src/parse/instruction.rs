@@ -1,3 +1,4 @@
+use alloc::format;
 use crate::module::Opcode;
 use crate::module::WasmInstruction;
 use crate::reader::ByteReader;
@@ -20,16 +21,23 @@ pub(crate) fn parse_instruction(reader: &ByteReader) -> Result<WasmInstruction> 
             let idx = reader.read_leb128_u32()?;
             WasmInstruction::I32Store { offset, idx }
         }
+        Opcode::I32Store => {
+            let offset = reader.read_leb128_u32()?;
+            let idx = reader.read_leb128_u32()?;
+            WasmInstruction::I64Store { offset, idx }
+        }
         Opcode::I32Const => {
             let value = reader.read_leb128_i32()?;
             WasmInstruction::I32Const(value)
         }
         Opcode::I32Add => WasmInstruction::I32Add,
+        Opcode::I64Add => WasmInstruction::I64Add,
         Opcode::End => WasmInstruction::End,
         Opcode::Call => {
             let idx = reader.read_leb128_u32()?;
             WasmInstruction::Call(idx)
         }
+        _ => todo!("opcode not supported yet: {:?}", op)
     })
 }
 

@@ -2,7 +2,7 @@ use hal_core::module::Value;
 use hal_env::{Environment, SingleThreadedEnvironment, SpawnWat, wat_source};
 
 #[test]
-fn test() {
+fn call_local() {
     for mut env in [
         SingleThreadedEnvironment::default()
     ] {

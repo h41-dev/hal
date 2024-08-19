@@ -1,5 +1,4 @@
 use alloc::boxed::Box;
-use alloc::rc::Rc;
 use alloc::string::ToString;
 use alloc::vec;
 use alloc::vec::Vec;
@@ -107,13 +106,16 @@ impl Compiler {
                                     WasmInstruction::LocalGet(addr) => Instruction::LocalGet(addr.clone()),
                                     WasmInstruction::LocalSet(addr) => Instruction::LocalSet(addr.clone()),
                                     WasmInstruction::I32Store { offset, idx } => Instruction::StoreI32 { offset: offset.clone(), idx: idx.clone() },
+                                    WasmInstruction::I64Store { offset, idx } => Instruction::StoreI64 { offset: offset.clone(), idx: idx.clone() },
                                     WasmInstruction::I32Const(value) => Instruction::ConstI32(value.clone()),
+                                    WasmInstruction::I64Const(value) => Instruction::ConstI64(value.clone()),
                                     WasmInstruction::End => Instruction::End,
                                     WasmInstruction::I32Add => Instruction::AddI32,
-                                    WasmInstruction::Call(addr) => Instruction::Invoke(addr.clone())
+                                    WasmInstruction::I64Add => Instruction::AddI64,
+                                    WasmInstruction::Call(addr) => Instruction::Invoke(addr.clone()),
                                 }
                             }).collect(),
-                    )               )
+                    ))
 
                 // let func = hal_core::module::LocalFunctionData {
                 //     // func_type: func_type.clone(),

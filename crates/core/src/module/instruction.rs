@@ -4,8 +4,10 @@ use crate::module::{FunctionIndex, LocalIndex, MemoryIndex, Offset, Value, Value
 #[derive(Clone)]
 pub enum Instruction {
     AddI32,
+    AddI64,
 
     ConstI32(i32),
+    ConstI64(i64),
 
     End,
 
@@ -16,6 +18,7 @@ pub enum Instruction {
     LocalSet(LocalIndex),
 
     StoreI32 { offset: Offset, idx: MemoryIndex },
+    StoreI64 { offset: Offset, idx: MemoryIndex },
 }
 
 
