@@ -1,12 +1,14 @@
 use alloc::boxed::Box;
 use alloc::vec;
 use alloc::vec::Vec;
-use crate::Result;
+
+use hal_core::reader::ByteReader;
+
 use crate::module::WasmFunc;
 use crate::parse::value::parse_value_types;
-use crate::reader::ByteReader;
+use crate::Result;
 
-pub(crate) fn parse_types_section(size:u32, reader: &ByteReader) -> Result<Box<[WasmFunc]>> {
+pub(crate) fn parse_types_section(size: u32, reader: &ByteReader) -> Result<Box<[WasmFunc]>> {
     let mut result: Vec<WasmFunc> = vec![];
     let expected_reader_pos = reader.pos() + size as usize;
     let count = reader.read_leb128_u32()?;

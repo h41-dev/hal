@@ -1,7 +1,9 @@
 use alloc::boxed::Box;
 use alloc::vec;
+
+use hal_core::reader::ByteReader;
+
 use crate::Result;
-use crate::reader::ByteReader;
 
 pub(crate) fn parse_functions_section(size: u32, reader: &ByteReader) -> Result<Box<[u32]>> {
     let mut result = vec![];

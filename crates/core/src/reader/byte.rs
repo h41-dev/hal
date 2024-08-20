@@ -1,12 +1,11 @@
 use alloc::boxed::Box;
 use core::cell::RefCell;
 
-use hal_core::leb128::Leb128;
-use WasmParseError::UnexpectedEndOfFile;
+use crate::leb128::Leb128;
+use crate::reader::Error;
+use crate::reader::Error::{OutOfBounds, UnexpectedEndOfFile};
 
-use crate::error::WasmParseError;
-use crate::error::WasmParseError::{InvalidLEB128Encoding, OutOfBounds};
-use crate::Result;
+type Result<T, E = Error> = core::result::Result<T, E>;
 
 /// A `ByteReader` provides a simple mechanism for reading bytes sequentially
 /// from a data source in memory. This struct is useful for scenarios where you
@@ -21,7 +20,7 @@ use crate::Result;
 /// # Example
 ///
 /// ```
-/// use hal_wasm::reader::ByteReader;
+/// use hal_core::reader::ByteReader;
 /// let data: [u8;3] = [0x01, 0x02, 0x03];
 /// let mut reader = ByteReader::new(data.as_ref());
 ///
@@ -240,7 +239,7 @@ impl<'a> ByteReader<'a> {
     /// # Example
     ///
     /// ```rust
-    /// use hal_wasm::reader::ByteReader;
+    /// use hal_core::reader::ByteReader;
     /// let data: Vec<u8> = vec![1, 2, 3, 4, 5];
     /// let reader = ByteReader::new(&data);
     /// assert_eq!(reader.peek_range(3).unwrap(), &[1, 2, 3]);
@@ -298,8 +297,8 @@ impl<'a> ByteReader<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::error::WasmParseError;
-    use crate::error::WasmParseError::OutOfBounds;
+    use crate::reader::byte::Error;
+    use crate::reader::byte::Error::OutOfBounds;
     use crate::reader::ByteReader;
 
     #[test]
@@ -418,7 +417,7 @@ mod tests {
         let data = [0x80]; // Incomplete LEB128 encoding
         let ti = ByteReader::new(&data);
         let result = ti.read_leb128_u32();
-        assert!(matches!(result, Err(WasmParseError::UnexpectedEndOfFile)));
+        assert!(matches!(result, Err(Error::UnexpectedEndOfFile)));
     }
 
     #[test]
@@ -426,7 +425,7 @@ mod tests {
         let data = [0xFF, 0xFF, 0xFF, 0xFF, 0xFF]; // Too many bytes for a valid u32
         let ti = ByteReader::new(&data);
         let result = ti.read_leb128_u32();
-        assert!(matches!(result, Err(WasmParseError::InvalidLEB128Encoding)));
+        assert!(matches!(result, Err(Error::InvalidLEB128Encoding)));
     }
 
 
@@ -495,7 +494,7 @@ mod tests {
         let data = [0x80]; // Incomplete LEB128 encoding
         let ti = ByteReader::new(&data);
         let result = ti.read_leb128_i32();
-        assert!(matches!(result, Err(WasmParseError::UnexpectedEndOfFile)));
+        assert!(matches!(result, Err(Error::UnexpectedEndOfFile)));
     }
 
     #[test]
@@ -503,7 +502,7 @@ mod tests {
         let data = [0xFF, 0xFF, 0xFF, 0xFF, 0xFF]; // Too many bytes for a valid i32
         let ti = ByteReader::new(&data);
         let result = ti.read_leb128_i32();
-        assert!(matches!(result, Err(WasmParseError::InvalidLEB128Encoding)));
+        assert!(matches!(result, Err(Error::InvalidLEB128Encoding)));
     }
 
     #[test]

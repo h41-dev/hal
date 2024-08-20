@@ -1,5 +1,6 @@
 use alloc::boxed::Box;
 
+use hal_core::reader::ByteReader;
 use WasmParseError::InvalidSectionCode;
 
 use crate::error::WasmParseError;
@@ -13,7 +14,6 @@ use crate::parse::function::parse_functions_section;
 use crate::parse::import::parse_import_section;
 use crate::parse::memory::parse_memory_section;
 use crate::parse::r#type::parse_types_section;
-use crate::reader::ByteReader;
 use crate::Result;
 
 mod code;
@@ -156,7 +156,7 @@ impl WasmParser {
 mod tests {
     use crate::error::WasmParseError::{InvalidMagicNumber, UnexpectedEndOfFile, UnsupportedVersion};
     use crate::parse::WasmParser;
-    use crate::reader::ByteReader;
+    use hal_core::reader::ByteReader;
 
     #[test]
     fn nothing_to_decode() {

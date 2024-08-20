@@ -1,7 +1,7 @@
-use alloc::format;
+use hal_core::reader::ByteReader;
+
 use crate::module::Opcode;
 use crate::module::WasmInstruction;
-use crate::reader::ByteReader;
 use crate::Result;
 
 pub(crate) fn parse_instruction(reader: &ByteReader) -> Result<WasmInstruction> {
@@ -19,12 +19,12 @@ pub(crate) fn parse_instruction(reader: &ByteReader) -> Result<WasmInstruction> 
         Opcode::I32Store => {
             let flag = reader.read_leb128_u32()?;
             let offset = reader.read_leb128_u32()?;
-            WasmInstruction::I32Store { flag , offset }
+            WasmInstruction::I32Store { flag, offset }
         }
         Opcode::I32Store => {
             let flag = reader.read_leb128_u32()?;
             let offset = reader.read_leb128_u32()?;
-            WasmInstruction::I64Store { flag, offset}
+            WasmInstruction::I64Store { flag, offset }
         }
         Opcode::I32Const => {
             let value = reader.read_leb128_i32()?;

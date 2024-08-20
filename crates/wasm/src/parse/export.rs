@@ -1,10 +1,12 @@
 use alloc::boxed::Box;
 use alloc::vec;
+
+use hal_core::reader::ByteReader;
+
 use crate::error::WasmParseError::InvalidExportDescriptor;
-use crate::Result;
 use crate::module::{WasmExport, WasmExportDescriptor};
 use crate::parse::name::parse_name;
-use crate::reader::ByteReader;
+use crate::Result;
 
 pub(crate) fn parse_export_section(size: u32, reader: &ByteReader) -> Result<Box<[WasmExport]>> {
     let expected_reader_position = reader.pos() + size as usize;
@@ -25,4 +27,3 @@ pub(crate) fn parse_export_section(size: u32, reader: &ByteReader) -> Result<Box
     debug_assert_eq!(reader.pos(), expected_reader_position);
     Ok(result.into())
 }
-

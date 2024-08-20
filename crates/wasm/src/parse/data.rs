@@ -1,8 +1,9 @@
 use alloc::boxed::Box;
 use alloc::vec;
 
+use hal_core::reader::ByteReader;
+
 use crate::module::WasmData;
-use crate::reader::ByteReader;
 use crate::Result;
 
 pub(crate) fn parse_data_section(size: u32, reader: &ByteReader) -> Result<Box<[WasmData]>> {

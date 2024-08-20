@@ -1,8 +1,9 @@
 use alloc::boxed::Box;
 use alloc::vec;
 
+use hal_core::reader::ByteReader;
+
 use crate::module::WasmCustom;
-use crate::reader::ByteReader;
 use crate::Result;
 
 pub(crate) fn parse_custom_section(size: u32, reader: &ByteReader) -> Result<Box<[WasmCustom]>> {

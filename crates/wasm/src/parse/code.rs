@@ -4,7 +4,7 @@ use crate::Result;
 use crate::module::WasmFunctionBody;
 use crate::parse::instruction::parse_instruction;
 use crate::parse::value::parse_value_type;
-use crate::reader::ByteReader;
+use hal_core::reader::ByteReader;
 
 pub(crate) fn parse_code_section(size: u32, reader: &ByteReader) -> Result<Box<[WasmFunctionBody]>>{
     let mut result = vec![];

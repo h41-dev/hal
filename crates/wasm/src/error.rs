@@ -1,4 +1,5 @@
 use hal_core::leb128::Leb128Error;
+use hal_core::reader::Error;
 
 #[cfg_attr(any(test, debug_assertions), derive(Debug))]
 #[derive(PartialEq)]
@@ -22,6 +23,16 @@ pub enum WasmParseError {
     // InvalidIndex,
     // UnknownSection(u8),
     // UnsupportedFeature(&'static str),
+}
+
+impl From<hal_core::reader::Error> for WasmParseError {
+    fn from(value: Error) -> Self {
+        match value {
+            Error::OutOfBounds => WasmParseError::OutOfBounds,
+            Error::UnexpectedEndOfFile => WasmParseError::UnexpectedEndOfFile,
+            Error::InvalidLEB128Encoding => WasmParseError::InvalidLEB128Encoding
+        }
+    }
 }
 
 impl core::fmt::Display for WasmParseError {

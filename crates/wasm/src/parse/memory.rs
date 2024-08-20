@@ -1,10 +1,12 @@
 use alloc::boxed::Box;
 use alloc::vec;
-use crate::Result;
-use crate::module::{WasmMemory, WasmResizableLimit};
-use crate::reader::ByteReader;
 
-pub(crate) fn parse_memory_section(size: u32, reader: &ByteReader) -> Result<Box<[WasmMemory]>>{
+use hal_core::reader::ByteReader;
+
+use crate::module::{WasmMemory, WasmResizableLimit};
+use crate::Result;
+
+pub(crate) fn parse_memory_section(size: u32, reader: &ByteReader) -> Result<Box<[WasmMemory]>> {
     let expected_reader_pos = reader.pos() + size as usize;
     let count = reader.read_leb128_u32()?;
     let mut result = vec![];

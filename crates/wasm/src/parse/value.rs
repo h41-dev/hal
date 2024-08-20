@@ -1,9 +1,10 @@
 use alloc::boxed::Box;
 use alloc::vec;
 
+use hal_core::reader::ByteReader;
+
 use crate::error::WasmParseError::InvalidValueType;
 use crate::module::WasmValueType;
-use crate::reader::ByteReader;
 use crate::Result;
 
 pub(crate) fn parse_value_type(reader: &ByteReader) -> Result<WasmValueType> {
