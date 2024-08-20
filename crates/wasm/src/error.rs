@@ -1,4 +1,4 @@
-use hal_core::leb128::Leb128EncodingError;
+use hal_core::leb128::Leb128Error;
 
 #[cfg_attr(any(test, debug_assertions), derive(Debug))]
 #[derive(PartialEq)]
@@ -52,11 +52,11 @@ impl core::fmt::Display for WasmParseError {
     }
 }
 
-impl From<Leb128EncodingError> for WasmParseError {
-    fn from(e: Leb128EncodingError) -> Self {
+impl From<Leb128Error> for WasmParseError {
+    fn from(e: Leb128Error) -> Self {
         match e {
-            Leb128EncodingError::InvalidEncoding => WasmParseError::InvalidLEB128Encoding,
-            Leb128EncodingError::IncompleteEncoding => WasmParseError::UnexpectedEndOfFile
+            Leb128Error::InvalidEncoding => WasmParseError::InvalidLEB128Encoding,
+            Leb128Error::IncompleteEncoding => WasmParseError::UnexpectedEndOfFile
         }
     }
 }

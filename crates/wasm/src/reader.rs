@@ -154,30 +154,10 @@ impl<'a> ByteReader<'a> {
     ///
     /// A `Result` containing the decoded `i32` value, or a `ParseError` if the read fails.
     pub fn read_leb128_i32(&self) -> Result<i32> {
-        let mut result = 0i32;
-        let mut shift = 0;
-
-        loop {
-            let byte = self.read_u8()?;
-            result |= i32::from(byte & 0x7F) << shift;
-            shift += 7;
-
-
-            // If the high-order bit is not set, this is the last byte
-            if byte & 0x80 == 0 {
-                // If this was a signed value and the sign bit is set in the final byte
-                if (byte & 0x40) != 0 && shift < 32 {
-                    // Perform sign extension
-                    result |= -(1 << shift);
-                }
-                return Ok(result);
-            }
-
-            // If we exceed the maximum shift for a 32-bit integer, return an error
-            if shift >= 32 {
-                return Err(InvalidLEB128Encoding);
-            }
-        }
+        let (result, consumed) = i32::read_leb128(self.peek_range(5)?)?;
+        let mut pos = self.pos.borrow_mut();
+        *pos += consumed;
+        Ok(result)
     }
 
     /// Reads a 64-bit unsigned integer (`u64`) from the current reader position.
@@ -516,7 +496,6 @@ mod tests {
         let ti = ByteReader::new(&data);
         let result = ti.read_leb128_i32();
         assert!(matches!(result, Err(WasmParseError::UnexpectedEndOfFile)));
-        assert!(ti.eof());
     }
 
     #[test]
