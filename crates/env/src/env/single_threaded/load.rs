@@ -6,16 +6,16 @@ use hal_process::{Process, ProcessState};
 use hal_wasm::WasmParser;
 use hal_wat::WatParser;
 
-use crate::{Handle, SingleThreadedEnvironment};
+use crate::{State, SingleThreadedEnvironment};
 use crate::env::error::LoadError;
 use crate::env::source::{wasm_source, wat_source};
 
 pub trait LoadWasm<SOURCE> {
-    fn load(&mut self, source: SOURCE) -> Result<Handle, LoadError>;
+    fn load(&mut self, source: SOURCE) -> Result<State, LoadError>;
 }
 
 pub trait LoadWat<SOURCE> {
-    fn load(&mut self, source: SOURCE) -> Result<Handle, LoadError>;
+    fn load(&mut self, source: SOURCE) -> Result<State, LoadError>;
 }
 
 impl Display for LoadError {
@@ -26,11 +26,11 @@ impl Display for LoadError {
 
 
 impl<T: AsRef<[u8]>> LoadWasm<wasm_source::Bytes<T>> for SingleThreadedEnvironment {
-    fn load(&mut self, source: wasm_source::Bytes<T>) -> Result<Handle, LoadError> {
+    fn load(&mut self, source: wasm_source::Bytes<T>) -> Result<State, LoadError> {
         let wasm = WasmParser::parse(source.as_ref())?;
         let module = self.compiler.compile(wasm)?;
 
-        Ok(Handle {
+        Ok(State {
             processor: &self.processor,
             process: Process {
                 state: ProcessState::new(module).unwrap(),
@@ -42,7 +42,7 @@ impl<T: AsRef<[u8]>> LoadWasm<wasm_source::Bytes<T>> for SingleThreadedEnvironme
 }
 
 impl<T: AsRef<str>> LoadWasm<wat_source::String<T>> for SingleThreadedEnvironment {
-    fn load(&mut self, source: wat_source::String<T>) -> Result<Handle, LoadError> {
+    fn load(&mut self, source: wat_source::String<T>) -> Result<State, LoadError> {
         let bytes = WatParser::parse_str(source.as_ref())
             .map(|data| wasm_source::bytes(data))?;
 

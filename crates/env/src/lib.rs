@@ -8,7 +8,7 @@ extern crate core;
 pub use env::Environment;
 pub use env::single_threaded::{LoadWasm, LoadWat, SingleThreadedEnvironment, SpawnWasm, SpawnWat};
 pub use env::source::*;
-pub use handle::Handle;
+pub use state::State;
 
 mod env;
-mod handle;
+mod state;

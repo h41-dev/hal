@@ -6,7 +6,7 @@ fn call_local() {
     for mut env in [
         SingleThreadedEnvironment::default()
     ] {
-        let mut handle = env.spawn(wat_source::string(
+        let mut state = env.spawn(wat_source::string(
             r#"(module
                   (func (export "call_doubler") (param i32) (result i32)
                     (local.get 0)
@@ -22,7 +22,7 @@ fn call_local() {
 
         let args = [Value::I32(21)];
         let expected = Some(Value::I32(42));
-        let result = handle.invoke("call_doubler", args).unwrap();
+        let result = state.invoke("call_doubler", args).unwrap();
         assert_eq!(result, expected, "{}", env.name());
     }
 }

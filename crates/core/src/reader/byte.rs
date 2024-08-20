@@ -67,7 +67,7 @@ impl<'a> ByteReader<'a> {
     ///
     /// # Returns
     ///
-    /// A new `ByteReader` handle.
+    /// A new `ByteReader` state.
     pub fn new(data: &'a [u8]) -> Self {
         ByteReader {
             data,

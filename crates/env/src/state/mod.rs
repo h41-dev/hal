@@ -5,12 +5,12 @@ use hal_core::module::MemoryAddress;
 use hal_process::{Process, Processor, Trap};
 
 #[cfg_attr(any(test, debug_assertions), derive(Debug))]
-pub struct Handle<'processor> {
+pub struct State<'processor> {
     pub(crate) processor: &'processor Processor,
     pub(crate) process: Process,
 }
 
-impl<'runtime> Handle<'runtime> {
+impl<'runtime> State<'runtime> {
 
     pub fn invoke(&mut self, name: impl Into<String>, args: impl AsRef<[Value]>) -> Result<Option<Value>, Trap> {
         // FIXME instead of invoking process directly there should be a mailbox

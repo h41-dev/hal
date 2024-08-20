@@ -12,7 +12,7 @@ fn test_method(vt: ValueType, value: Value) {
     for mut env in [
         SingleThreadedEnvironment::default()
     ] {
-        let mut handle = env.load(wat_source::string(
+        let mut state = env.load(wat_source::string(
             r#"(module
   (memory 1)
   (func $store
@@ -24,10 +24,10 @@ fn test_method(vt: ValueType, value: Value) {
 )"#.replace("{vt}", vt.to_str()).replace("{value}", &*value.to_string())
         )).unwrap();
 
-        let invocation = handle.invoke("store_fn", []);
+        let invocation = state.invoke("store_fn", []);
         assert!(invocation.is_ok());
 
-        let memory = handle.memory(0).unwrap();
+        let memory = state.memory(0).unwrap();
         assert_eq!(memory.data.borrow()[0], 42);
     }
 }

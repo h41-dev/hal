@@ -21,7 +21,7 @@ fn test_method(vt: ValueType, args: impl AsRef<[Value]>, expected: Value) {
     for mut env in [
         SingleThreadedEnvironment::default()
     ] {
-        let mut handle = env.spawn(wat_source::string(
+        let mut state = env.spawn(wat_source::string(
            r#"(module
                       (func (export "add") (param {vt} {vt}) (result {vt})
                         (local.get 0)
@@ -31,7 +31,7 @@ fn test_method(vt: ValueType, args: impl AsRef<[Value]>, expected: Value) {
                     )"#.replace("{vt}", vt.to_str())
         )).unwrap();
 
-        let result = handle.invoke("add", args).unwrap().unwrap();
+        let result = state.invoke("add", args).unwrap().unwrap();
         assert_eq!(result, expected, "{} - {}", env.name(), vt);
     }
 }
