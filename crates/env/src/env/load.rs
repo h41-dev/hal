@@ -6,7 +6,7 @@ use hal_process::{Process, ProcessState};
 use hal_wasm::WasmParser;
 use hal_wat::WatParser;
 
-use crate::{State, SingleThreadedEnvironment};
+use crate::{State, Environment};
 use crate::env::error::LoadError;
 use crate::env::source::{wasm_source, wat_source};
 
@@ -25,7 +25,7 @@ impl Display for LoadError {
 }
 
 
-impl<T: AsRef<[u8]>> LoadWasm<wasm_source::Bytes<T>> for SingleThreadedEnvironment {
+impl<T: AsRef<[u8]>> LoadWasm<wasm_source::Bytes<T>> for Environment {
     fn load(&mut self, source: wasm_source::Bytes<T>) -> Result<State, LoadError> {
         let wasm = WasmParser::parse(source.as_ref())?;
         let module = self.compiler.compile(wasm)?;
@@ -41,7 +41,7 @@ impl<T: AsRef<[u8]>> LoadWasm<wasm_source::Bytes<T>> for SingleThreadedEnvironme
     }
 }
 
-impl<T: AsRef<str>> LoadWasm<wat_source::String<T>> for SingleThreadedEnvironment {
+impl<T: AsRef<str>> LoadWasm<wat_source::String<T>> for Environment {
     fn load(&mut self, source: wat_source::String<T>) -> Result<State, LoadError> {
         let bytes = WatParser::parse_str(source.as_ref())
             .map(|data| wasm_source::bytes(data))?;
@@ -55,12 +55,12 @@ impl<T: AsRef<str>> LoadWasm<wat_source::String<T>> for SingleThreadedEnvironmen
 mod tests {
     mod wat {
         mod string {
-            use crate::{SingleThreadedEnvironment, wat_source};
-            use crate::env::single_threaded::load::{LoadError, LoadWasm};
+            use crate::{Environment, wat_source};
+            use crate::env::load::{LoadError, LoadWasm};
 
             #[test]
             fn ok() {
-                let mut ti = SingleThreadedEnvironment::default();
+                let mut ti = Environment::default();
                 let result = ti.load(wat_source::string("(module)"));
                 assert!(result.is_ok(), "Loading module via string failed");
                 todo!()
@@ -68,7 +68,7 @@ mod tests {
 
             #[test]
             fn parsing_fails() {
-                let mut ti = SingleThreadedEnvironment::default();
+                let mut ti = Environment::default();
                 let result = ti.load(wat_source::string("(module"));
                 assert_eq!(result.err(), Some(LoadError::wasm_parsing_failed("expected `)`\n     --> <anon>:1:8\n      |\n    1 | (module\n      |        ^")));
                 todo!()

@@ -1,7 +1,8 @@
-use std::fmt::{Display, format};
+use std::fmt::Display;
+
 use hal_core::module::{Value, ValueType};
-use hal_env::{Environment, SingleThreadedEnvironment, SpawnWat, wat_source};
-use Value::{I32,I64};
+use hal_env::{Environment, SpawnWat, wat_source};
+use Value::{I32, I64};
 
 #[test]
 fn i32() {
@@ -18,20 +19,17 @@ fn test_method(vt: ValueType, args: impl AsRef<[Value]>, expected: Value) {
     let args = &args;
     let expected = expected;
 
-    for mut env in [
-        SingleThreadedEnvironment::default()
-    ] {
-        let mut state = env.spawn(wat_source::string(
-           r#"(module
+    let mut env = Environment::default();
+    let mut state = env.spawn(wat_source::string(
+        r#"(module
                       (func (export "add") (param {vt} {vt}) (result {vt})
                         (local.get 0)
                         (local.get 1)
                         {vt}.add
                       )
                     )"#.replace("{vt}", vt.to_str())
-        )).unwrap();
+    )).unwrap();
 
-        let result = state.invoke("add", args).unwrap().unwrap();
-        assert_eq!(result, expected, "{} - {}", env.name(), vt);
-    }
+    let result = state.invoke("add", args).unwrap().unwrap();
+    assert_eq!(result, expected, "{}", vt);
 }
