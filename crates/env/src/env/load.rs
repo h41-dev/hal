@@ -45,7 +45,6 @@ impl<T: AsRef<str>> LoadWasm<wat_source::String<T>> for Environment {
     fn load(&mut self, source: wat_source::String<T>) -> Result<State, LoadError> {
         let bytes = WatParser::parse_str(source.as_ref())
             .map(|data| wasm_source::bytes(data))?;
-
         self.load(bytes)
     }
 }

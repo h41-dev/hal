@@ -10,3 +10,7 @@ hal-core = { path = "../core" }
 hal-process = { path = "../process" }
 hal-wasm = { path = "../wasm" }
 hal-wat = { path = "../wat" }
+
+
+[dev-dependencies]
+wast={ version = "215.0.0"}

@@ -1,5 +1,10 @@
+use alloc::string::String;
+use alloc::vec;
+use alloc::vec::Vec;
+
 use hal_compile::Compiler;
-use hal_process::Processor;
+use hal_core::module::Value;
+use hal_process::{Processor, Trap};
 pub use load::{LoadWasm, LoadWat};
 pub use spawn::{SpawnWasm, SpawnWat};
 
@@ -20,5 +25,11 @@ impl Default for Environment {
             compiler: Compiler::default(),
             processor: Processor::default(),
         }
+    }
+}
+
+impl Environment {
+    pub fn invoke(&mut self, name: impl Into<String>, args: impl AsRef<[Value]>) -> Result<Vec<Value>, Trap> {
+        Ok(vec![])
     }
 }
