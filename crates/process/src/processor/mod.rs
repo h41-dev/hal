@@ -1,4 +1,6 @@
+use alloc::boxed::Box;
 use alloc::string::String;
+use alloc::vec;
 use core::ops::ControlFlow;
 use core::ops::ControlFlow::Continue;
 
@@ -108,7 +110,7 @@ impl Processor {
         Continue(())
     }
 
-    pub fn invoke(&self, process: &mut Process, name: impl Into<String>, args: impl AsRef<[Value]>) -> Result<Option<Value>, Trap> {
+    pub fn invoke(&self, process: &mut Process, name: impl Into<String>, args: impl AsRef<[Value]>) -> Result<Box<[Value]>, Trap> {
         let name = name.into();
 
         let idx = match process.state.export(name.clone())
@@ -138,7 +140,7 @@ impl Processor {
     }
 }
 
-fn invoke_internal(process: &mut Process, engine: &Processor, func: &FunctionLocal) -> Result<Option<Value>, Trap> {
+fn invoke_internal(process: &mut Process, engine: &Processor, func: &FunctionLocal) -> Result<Box<[Value]>, Trap> {
     let arity = func.result_count();
 
     process.push_frame(func);
@@ -148,11 +150,22 @@ fn invoke_internal(process: &mut Process, engine: &Processor, func: &FunctionLoc
         panic!("failed to execute instructions: {}", e)
     };
 
-    if arity > 0 {
-        let Some(value) = process.stack.pop() else {
-            panic!("not found return value")
-        };
-        return Ok(Some(value));
+    // if arity > 0 {
+    //     let Some(value) = process.stack.pop() else {
+    //         panic!("not found return value")
+    //     };
+    //     return Ok(Some(value));
+    // }
+    // Ok(None)
+
+    let mut result = vec![];
+
+    for _ in 0 .. arity{
+            let Some(value) = process.stack.pop() else {
+                panic!("not found return value")
+            };
+         result.push(value);
     }
-    Ok(None)
+
+    Ok(result.into())
 }

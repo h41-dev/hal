@@ -1,3 +1,5 @@
+use alloc::boxed::Box;
+use alloc::rc::{Rc, Weak};
 use alloc::string::String;
 use alloc::vec;
 use alloc::vec::Vec;
@@ -20,7 +22,7 @@ mod spawn;
 #[cfg_attr(any(test, debug_assertions), derive(Debug))]
 pub struct Environment {
     pub(crate) compiler: Compiler,
-    pub(crate) processor: Processor,
+    pub(crate) processor: Rc<Processor>,
     pub(crate) modules: Vec<Module>,
     pub(crate) instances: Vec<Instance>,
 }
@@ -30,7 +32,7 @@ impl Default for Environment {
     fn default() -> Self {
         Self {
             compiler: Compiler::default(),
-            processor: Processor::default(),
+            processor: Rc::new(Processor::default()),
             modules: vec![],
             instances: vec![],
         }
@@ -38,24 +40,30 @@ impl Default for Environment {
 }
 
 impl Environment {
-    pub fn invoke(&mut self, name: impl Into<String>, args: impl AsRef<[Value]>) -> Result<Vec<Value>, Trap> {
-        Ok(vec![])
+    pub fn invoke(&mut self, name: impl Into<String>, args: impl AsRef<[Value]>) -> Result<Box<[Value]>, Trap> {
+        // FIXME handle nothing intantiated yet
+        let len = self.instances.len();
+        let instance=  self.instances.get_mut(len -1 ).unwrap();
+        instance.invoke(name, args)
+
     }
 
-    pub fn instantiate(&mut self, id: ModuleId) -> Result<&Instance, EnvironmentError> {
+    pub fn instantiate(& mut self, id: ModuleId) -> Result<&mut Instance, EnvironmentError> {
         let module = self.modules.get(id as usize).unwrap();
 
         let process_state = ProcessState::new(&module).unwrap();
-        let state = Instance {
+        let instance = Instance {
+            processor: Rc::downgrade(&self.processor),
             process: Process {
                 state: process_state,
                 stack: vec![],
                 call_stack: vec![],
-            },
+            }.into(),
         };
 
-        self.instances.push(state);
 
-        Ok(&self.instances.last().unwrap())
+        self.instances.push(instance);
+
+        Ok(&mut self.instances[0])
     }
 }

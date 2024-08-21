@@ -19,7 +19,7 @@ fn call_local() {
     )).unwrap();
 
     let args = [Value::I32(21)];
-    let expected = Some(Value::I32(42));
+    let expected = [Value::I32(42)];
     let result = instance.invoke("call_doubler", args).unwrap();
-    assert_eq!(result, expected);
+    assert_eq!(result.as_ref(), expected);
 }

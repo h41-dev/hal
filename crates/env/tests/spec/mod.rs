@@ -9,7 +9,7 @@ use wast::lexer::Lexer;
 use wast::parser::ParseBuffer;
 
 use hal_core::module::Value;
-use hal_env::{Environment, LoadWasm, wasm_source};
+use hal_env::{Environment, LoadWasm, SpawnWasm, wasm_source};
 
 mod core;
 mod incubator;
@@ -34,7 +34,7 @@ fn run_test(category: &str, file: &str) {
         match directive {
             Wat(module) => {
                 let (name, bytes) = read_quote_wat(module);
-                env.load(wasm_source::bytes(bytes));
+                env.spawn(wasm_source::bytes(bytes)).expect("TODO: panic message");
 
                 println!("module")
             }
@@ -97,7 +97,7 @@ fn read_quote_wat(module: QuoteWat) -> (Option<String>, Box<[u8]>) {
 }
 
 
-pub fn map_wast_return_value<'a>(args: impl Iterator<Item=wast::WastRet<'a>>) -> Vec<Value> {
+pub fn map_wast_return_value<'a>(args: impl Iterator<Item=wast::WastRet<'a>>) -> Box<[Value]> {
     args.map(|ret| {
         let wast::WastRet::Core(ret) = ret else {
             panic!("unsupported type");

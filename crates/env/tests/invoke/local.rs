@@ -15,7 +15,7 @@ fn i32_i32_to_i32() {
     )).unwrap();
 
     let args = vec![Value::I32(40), Value::I32(2)];
-    let expected = Some(Value::I32(42));
+    let expected = [Value::I32(42)];
     let result = instance.invoke("add", args).unwrap();
-    assert_eq!(result, expected);
+    assert_eq!(result.as_ref(), expected);
 }

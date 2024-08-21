@@ -30,6 +30,6 @@ fn test_method(vt: ValueType, args: impl AsRef<[Value]>, expected: Value) {
                     )"#.replace("{vt}", vt.to_str())
     )).unwrap();
 
-    let result = instance.invoke("add", args).unwrap().unwrap();
-    assert_eq!(result, expected, "{}", vt);
+    let result = instance.invoke("add", args).unwrap();
+    assert_eq!(result.as_ref(), [expected], "{}", vt);
 }
