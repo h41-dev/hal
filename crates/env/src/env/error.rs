@@ -1,8 +1,40 @@
 use alloc::string::{String, ToString};
 
 use hal_compile::CompilationError;
+use hal_process::Trap;
 use hal_wasm::WasmParseError;
 use hal_wat::WatParseError;
+
+#[cfg_attr(any(test, debug_assertions), derive(Debug))]
+#[derive(PartialEq)]
+pub enum EnvironmentError {
+    LoadError(LoadError),
+    Trapped(Trap),
+}
+
+impl From<LoadError> for EnvironmentError {
+    fn from(value: LoadError) -> Self {
+        EnvironmentError::LoadError(value)
+    }
+}
+
+impl From<Trap> for EnvironmentError {
+    fn from(value: Trap) -> Self {
+        EnvironmentError::Trapped(value)
+    }
+}
+
+impl From<WatParseError> for EnvironmentError {
+    fn from(value: WatParseError) -> Self {
+        EnvironmentError::LoadError(value.into())
+    }
+}
+
+impl From<WasmParseError> for EnvironmentError{
+    fn from(value: WasmParseError) -> Self {
+        EnvironmentError::LoadError(value.into())
+    }
+}
 
 #[cfg_attr(any(test, debug_assertions), derive(Debug))]
 #[derive(PartialEq)]

@@ -4,6 +4,7 @@ use hal_core::module::MemoryAddress;
 use hal_core::module::FunctionAddress;
 
 #[cfg_attr(any(test, debug_assertions), derive(Debug))]
+#[derive(PartialEq)]
 pub enum Trap{
     NotFoundExportedFunction(String),
     NotFoundFunction(String),

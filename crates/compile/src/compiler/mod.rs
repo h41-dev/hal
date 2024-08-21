@@ -1,12 +1,14 @@
 use alloc::boxed::Box;
+use alloc::rc::Rc;
 use alloc::string::ToString;
 use alloc::vec;
 use alloc::vec::Vec;
 
 use hal_core::constant::PAGE_SIZE;
-use hal_core::module::{Export, Function, FunctionSignature, Instruction, Memory, Module, ValueType};
+use hal_core::module::{Export, Function, FunctionSignature, Instruction, Memory, Module, ModuleId, ValueType};
 use hal_wasm::{WasmExportDescriptor, WasmInstruction};
 
+#[cfg_attr(any(test, debug_assertions), derive(Debug))]
 pub struct Compiler {}
 
 impl Default for Compiler {
@@ -34,15 +36,15 @@ impl Compiler {
         Self {}
     }
 
-    pub fn compile(&self, wasm: hal_wasm::WasmModule) -> Result<Module, CompilationError> {
+    pub fn compile(&self, id: ModuleId, wasm: hal_wasm::WasmModule) -> Result<Module, CompilationError> {
         let func_type_addrs = match wasm.functions {
             ref addr => addr.clone(),
             _ => Box::default()
         };
 
-        let mut exports: Vec<Export> = vec![];
-        let mut functions: Vec<Function> = vec![];
-        let mut memories: Vec<Memory> = vec![];
+        let mut exports: Vec<Rc<Export>> = vec![];
+        let mut functions: Vec<Rc<Function>> = vec![];
+        let mut memories: Vec<Rc<Memory>> = vec![];
 
         // if let ref import_section = wasm.imports {
         //     for import in import_section {
@@ -94,28 +96,30 @@ impl Compiler {
                 }
 
                 functions.push(
-                    Function::local(
-                        FunctionSignature::new(
-                            func_type.params.iter().map(|p| ValueType::from(p)).collect::<Vec<_>>().into(),
-                            func_type.returns.iter().map(|r| ValueType::from(r)).collect::<Vec<_>>().into(),
-                        ),
-                        locals.into(),
-                        func_body.code.iter()
-                            .map(|i| {
-                                match i {
-                                    WasmInstruction::LocalGet(addr) => Instruction::LocalGet(addr.clone()),
-                                    WasmInstruction::LocalSet(addr) => Instruction::LocalSet(addr.clone()),
-                                    WasmInstruction::I32Store { flag, offset } => Instruction::StoreI32 { flag: flag.clone(), offset: offset.clone() },
-                                    WasmInstruction::I64Store { flag, offset } => Instruction::StoreI64 { flag: flag.clone(), offset: offset.clone() },
-                                    WasmInstruction::I32Const(value) => Instruction::ConstI32(value.clone()),
-                                    WasmInstruction::I64Const(value) => Instruction::ConstI64(value.clone()),
-                                    WasmInstruction::End => Instruction::End,
-                                    WasmInstruction::I32Add => Instruction::AddI32,
-                                    WasmInstruction::I64Add => Instruction::AddI64,
-                                    WasmInstruction::Call(addr) => Instruction::Invoke(addr.clone()),
-                                }
-                            }).collect(),
-                    ))
+                    Rc::new(
+                        Function::local(
+                            FunctionSignature::new(
+                                func_type.params.iter().map(|p| ValueType::from(p)).collect::<Vec<_>>().into(),
+                                func_type.returns.iter().map(|r| ValueType::from(r)).collect::<Vec<_>>().into(),
+                            ),
+                            locals.into(),
+                            func_body.code.iter()
+                                .map(|i| {
+                                    match i {
+                                        WasmInstruction::LocalGet(addr) => Instruction::LocalGet(addr.clone()),
+                                        WasmInstruction::LocalSet(addr) => Instruction::LocalSet(addr.clone()),
+                                        WasmInstruction::I32Store { flag, offset } => Instruction::StoreI32 { flag: flag.clone(), offset: offset.clone() },
+                                        WasmInstruction::I64Store { flag, offset } => Instruction::StoreI64 { flag: flag.clone(), offset: offset.clone() },
+                                        WasmInstruction::I32Const(value) => Instruction::ConstI32(value.clone()),
+                                        WasmInstruction::I64Const(value) => Instruction::ConstI64(value.clone()),
+                                        WasmInstruction::End => Instruction::End,
+                                        WasmInstruction::I32Add => Instruction::AddI32,
+                                        WasmInstruction::I64Add => Instruction::AddI64,
+                                        WasmInstruction::Call(addr) => Instruction::Invoke(addr.clone()),
+                                    }
+                                }).collect(),
+                        ))
+                )
 
                 // let func = hal_core::module::LocalFunctionData {
                 //     // func_type: func_type.clone(),
@@ -148,7 +152,7 @@ impl Compiler {
                 let name = core::str::from_utf8(&*export.name).unwrap().to_string();
                 match export.desc {
                     WasmExportDescriptor::Func(idx) => {
-                        exports.push(Export::function(name, idx))
+                        exports.push(Rc::new(Export::function(name, idx)))
                     }
                     WasmExportDescriptor::Table(_) => todo!(),
                     WasmExportDescriptor::Memory(_) => todo!(),
@@ -178,10 +182,10 @@ impl Compiler {
         if let ref sections = wasm.memories {
             for memory in sections {
                 let min = memory.limits.min * PAGE_SIZE;
-                let memory = Memory {
+                let memory = Rc::new(Memory {
                     data: vec![0; min as usize].into(),
                     max: memory.limits.max,
-                };
+                });
                 memories.push(memory);
             }
         }
@@ -206,6 +210,7 @@ impl Compiler {
 
         Ok(
             Module::new(
+                id,
                 exports.into(),
                 functions.into(),
                 memories.into(),

@@ -4,7 +4,7 @@ use hal_env::{Environment, SpawnWat, wat_source};
 #[test]
 fn call_local() {
     let mut env = Environment::default();
-    let mut state = env.spawn(wat_source::string(
+    let instance = env.spawn(wat_source::string(
         r#"(module
                   (func (export "call_doubler") (param i32) (result i32)
                     (local.get 0)
@@ -20,6 +20,6 @@ fn call_local() {
 
     let args = [Value::I32(21)];
     let expected = Some(Value::I32(42));
-    let result = state.invoke("call_doubler", args).unwrap();
+    let result = instance.invoke("call_doubler", args).unwrap();
     assert_eq!(result, expected);
 }

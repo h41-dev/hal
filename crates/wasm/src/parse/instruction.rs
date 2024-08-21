@@ -1,44 +1,44 @@
 use hal_core::reader::ByteReader;
 
+use crate::{Result, WasmParseError};
 use crate::module::Opcode;
 use crate::module::WasmInstruction;
-use crate::Result;
 
 pub(crate) fn parse_instruction(reader: &ByteReader) -> Result<WasmInstruction> {
     let op = reader.read_u8()?;
     let op = Opcode::from_u8(op)?;
-    Ok(match op {
+    match op {
         Opcode::LocalGet => {
             let addr = reader.read_leb128_u32()?;
-            WasmInstruction::LocalGet(addr)
+            Ok(WasmInstruction::LocalGet(addr))
         }
         Opcode::LocalSet => {
             let addr = reader.read_leb128_u32()?;
-            WasmInstruction::LocalSet(addr)
+            Ok(WasmInstruction::LocalSet(addr))
         }
         Opcode::I32Store => {
             let flag = reader.read_leb128_u32()?;
             let offset = reader.read_leb128_u32()?;
-            WasmInstruction::I32Store { flag, offset }
+            Ok(WasmInstruction::I32Store { flag, offset })
         }
         Opcode::I32Store => {
             let flag = reader.read_leb128_u32()?;
             let offset = reader.read_leb128_u32()?;
-            WasmInstruction::I64Store { flag, offset }
+            Ok(WasmInstruction::I64Store { flag, offset })
         }
         Opcode::I32Const => {
             let value = reader.read_leb128_i32()?;
-            WasmInstruction::I32Const(value)
+            Ok(WasmInstruction::I32Const(value))
         }
-        Opcode::I32Add => WasmInstruction::I32Add,
-        Opcode::I64Add => WasmInstruction::I64Add,
-        Opcode::End => WasmInstruction::End,
+        Opcode::I32Add => Ok(WasmInstruction::I32Add),
+        Opcode::I64Add => Ok(WasmInstruction::I64Add),
+        Opcode::End => Ok(WasmInstruction::End),
         Opcode::Call => {
             let addr = reader.read_leb128_u32()?;
-            WasmInstruction::Call(addr)
+            Ok(WasmInstruction::Call(addr))
         }
-        _ => todo!("opcode not supported yet: {:?}", op)
-    })
+        _ => Err(WasmParseError::UnsupportedOpcode(op))
+    }
 }
 
 #[cfg(test)]

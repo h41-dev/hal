@@ -41,28 +41,11 @@ pub struct ProcessState {
 
 // FIXME own representation -- load from compiled module
 impl ProcessState {
-    pub fn new(module: Module) -> Result<Self, ProcessStateError> {
+    pub fn new(module: &Module) -> Result<Self, ProcessStateError> {
         Ok(Self {
-            functions: module.functions
-                .into_vec()
-                .into_iter()
-                .map(Rc::new)
-                .collect::<Vec<_>>()
-                .into_boxed_slice(),
-
-            exports: module.exports
-                .into_vec()
-                .into_iter()
-                .map(Rc::new)
-                .collect::<Vec<_>>()
-                .into_boxed_slice(),
-
-            memories: module.memories
-                .into_vec()
-                .into_iter()
-                .map(Rc::new)
-                .collect::<Vec<_>>()
-                .into_boxed_slice(),
+            functions: module.functions.clone(),
+            exports: module.exports.clone(),
+            memories: module.memories.clone(),
         })
     }
 

@@ -10,7 +10,7 @@ fn i32() {
 
 fn test_method(vt: ValueType, value: Value) {
     let mut env = Environment::default();
-    let mut state = env.load(wat_source::string(
+    let module_id = env.load(wat_source::string(
         r#"(module
   (memory 1)
   (func $store
@@ -22,9 +22,11 @@ fn test_method(vt: ValueType, value: Value) {
 )"#.replace("{vt}", vt.to_str()).replace("{value}", &*value.to_string())
     )).unwrap();
 
-    let invocation = state.invoke("store_fn", []);
-    assert!(invocation.is_ok());
+    let instance = env.instantiate(module_id).unwrap();
 
-    let memory = state.memory(0).unwrap();
+    let result = instance.invoke("store_fn", []);
+    assert!(result.is_ok());
+
+    let memory = instance.memory(0).unwrap();
     assert_eq!(memory.data.borrow()[0], 42);
 }

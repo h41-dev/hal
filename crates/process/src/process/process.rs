@@ -1,21 +1,20 @@
-use alloc::boxed::Box;
 use alloc::vec::Vec;
-use hal_core::module::{Function, FunctionLocal, Value, ValueType};
+
+use hal_core::module::{FunctionLocal, Value, ValueType};
+
 use crate::process::frame::Frame;
 use crate::process::state::ProcessState;
 use crate::Trap;
 
 #[cfg_attr(any(test, debug_assertions), derive(Debug))]
-pub struct Process{
+pub struct Process {
     pub state: ProcessState,
     pub stack: Vec<Value>,
     pub call_stack: Vec<Frame>,
 }
 
 impl Process {
-
     pub(crate) fn push_frame(&mut self, func: &FunctionLocal) {
-
         let bottom = self.stack.len() - func.parameter_count();
         let mut locals = self.stack.split_off(bottom);
 
@@ -33,7 +32,7 @@ impl Process {
             sp: self.stack.len(),
             instructions: func.instructions(),
             arity,
-            locals: locals.into()
+            locals: locals.into(),
         };
 
         self.call_stack.push(frame);

@@ -9,26 +9,16 @@ use wast::lexer::Lexer;
 use wast::parser::ParseBuffer;
 
 use hal_core::module::Value;
-use hal_env::Environment;
+use hal_env::{Environment, LoadWasm, wasm_source};
 
-macro_rules! test {
-    ($file: ident) => {
-        #[test]
-        fn $file(){
-            run_test(stringify!($file));
-        }
-    };
-}
+mod core;
+mod incubator;
 
-
-test!(i32);
-
-
-fn run_test(file: &str) {
+fn run_test(category: &str, file: &str) {
     let mut env = Environment::default();
 
     let mut file_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    file_path.push(Path::new(format!("tests/spec/core/{}.wast", file).as_str()));
+    file_path.push(Path::new(format!("tests/spec/{}/{}.wast", category, file).as_str()));
     let test_file = fs::read(file_path).expect(format!("Unable to read file {}", file).as_str());
     let wast = std::str::from_utf8(test_file.as_ref()).expect("failed to convert wast to utf8");
     let mut lexer = Lexer::new(wast.clone());
@@ -43,8 +33,8 @@ fn run_test(file: &str) {
 
         match directive {
             Wat(module) => {
-                let (name, bytes) = encode_quote_wat(module);
-                // env.load(wasm_source::bytes(bytes)).expect("Unable to load module");
+                let (name, bytes) = read_quote_wat(module);
+                env.load(wasm_source::bytes(bytes));
 
                 println!("module")
             }
@@ -94,25 +84,13 @@ fn run_test(file: &str) {
     }
 }
 
-fn encode_quote_wat(module: QuoteWat) -> (Option<String>, Vec<u8>) {
+fn read_quote_wat(module: QuoteWat) -> (Option<String>, Box<[u8]>) {
     match module {
-        QuoteWat::QuoteModule(_, quoted_wat) => {
-            let wat = quoted_wat
-                .iter()
-                .map(|(_, s)| std::str::from_utf8(s).expect("failed to convert wast to utf8"))
-                .collect::<Vec<_>>()
-                .join("\n");
-
-            let lexer = wast::lexer::Lexer::new(&wat);
-            let buf = wast::parser::ParseBuffer::new_with_lexer(lexer).expect("failed to create parse buffer");
-            let mut wat_data = wast::parser::parse::<wast::Wat>(&buf).expect("failed to parse wat");
-            (None, wat_data.encode().expect("failed to encode module"))
-        }
         QuoteWat::Wat(mut wat) => {
             let wast::Wat::Module(ref module) = wat else {
                 unimplemented!("Not supported");
             };
-            (module.id.map(|id| id.name().to_string()), wat.encode().expect("failed to encode module"))
+            (module.id.map(|id| id.name().to_string()), Box::from(wat.encode().expect("failed to encode module")))
         }
         _ => unimplemented!("Not supported"),
     }

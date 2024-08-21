@@ -2,20 +2,21 @@ use alloc::string::ToString;
 use alloc::vec;
 use core::fmt::{Display, Formatter};
 
+use hal_core::module::ModuleId;
 use hal_process::{Process, ProcessState};
 use hal_wasm::WasmParser;
 use hal_wat::WatParser;
 
-use crate::{State, Environment};
+use crate::{Environment, Instance};
 use crate::env::error::LoadError;
 use crate::env::source::{wasm_source, wat_source};
 
 pub trait LoadWasm<SOURCE> {
-    fn load(&mut self, source: SOURCE) -> Result<State, LoadError>;
+    fn load(&mut self, source: SOURCE) -> Result<ModuleId, LoadError>;
 }
 
 pub trait LoadWat<SOURCE> {
-    fn load(&mut self, source: SOURCE) -> Result<State, LoadError>;
+    fn load(&mut self, source: SOURCE) -> Result<ModuleId, LoadError>;
 }
 
 impl Display for LoadError {
@@ -24,25 +25,22 @@ impl Display for LoadError {
     }
 }
 
-
 impl<T: AsRef<[u8]>> LoadWasm<wasm_source::Bytes<T>> for Environment {
-    fn load(&mut self, source: wasm_source::Bytes<T>) -> Result<State, LoadError> {
+    fn load(&mut self, source: wasm_source::Bytes<T>) -> Result<ModuleId, LoadError> {
         let wasm = WasmParser::parse(source.as_ref())?;
-        let module = self.compiler.compile(wasm)?;
+        let module_id = self.modules.len() as ModuleId;
+        let module = self.compiler.compile(module_id, wasm)?;
 
-        Ok(State {
-            processor: &self.processor,
-            process: Process {
-                state: ProcessState::new(module).unwrap(),
-                stack: vec![],
-                call_stack: vec![],
-            },
-        })
+
+        self.modules.push(module);
+
+
+        return Ok(module_id);
     }
 }
 
 impl<T: AsRef<str>> LoadWasm<wat_source::String<T>> for Environment {
-    fn load(&mut self, source: wat_source::String<T>) -> Result<State, LoadError> {
+    fn load(&mut self, source: wat_source::String<T>) -> Result<ModuleId, LoadError> {
         let bytes = WatParser::parse_str(source.as_ref())
             .map(|data| wasm_source::bytes(data))?;
         self.load(bytes)

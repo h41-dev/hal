@@ -20,7 +20,7 @@ fn test_method(vt: ValueType, args: impl AsRef<[Value]>, expected: Value) {
     let expected = expected;
 
     let mut env = Environment::default();
-    let mut state = env.spawn(wat_source::string(
+    let mut instance = env.spawn(wat_source::string(
         r#"(module
                       (func (export "add") (param {vt} {vt}) (result {vt})
                         (local.get 0)
@@ -30,6 +30,6 @@ fn test_method(vt: ValueType, args: impl AsRef<[Value]>, expected: Value) {
                     )"#.replace("{vt}", vt.to_str())
     )).unwrap();
 
-    let result = state.invoke("add", args).unwrap().unwrap();
+    let result = instance.invoke("add", args).unwrap().unwrap();
     assert_eq!(result, expected, "{}", vt);
 }

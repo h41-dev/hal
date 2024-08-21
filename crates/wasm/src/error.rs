@@ -1,6 +1,8 @@
 use hal_core::leb128::Leb128Error;
 use hal_core::reader::Error;
 
+use crate::module::Opcode;
+
 #[cfg_attr(any(test, debug_assertions), derive(Debug))]
 #[derive(PartialEq)]
 pub enum WasmParseError {
@@ -20,6 +22,7 @@ pub enum WasmParseError {
     InvalidImportDescriptor(u8),
     InvalidExportDescriptor(u8),
     InvalidOpcode(u8),
+    UnsupportedOpcode(Opcode),
     // InvalidIndex,
     // UnknownSection(u8),
     // UnsupportedFeature(&'static str),
@@ -55,6 +58,7 @@ impl core::fmt::Display for WasmParseError {
             WasmParseError::InvalidImportDescriptor(descriptor) => write!(f, "Invalid import descriptor: {}", descriptor),
             WasmParseError::InvalidExportDescriptor(descriptor) => write!(f, "Invalid export descriptor: {}", descriptor),
             WasmParseError::InvalidOpcode(opcode) => write!(f, "Invalid opcode: {}", opcode),
+            WasmParseError::UnsupportedOpcode(opcode) => write!(f, "Unsupported opcode: {:?}", opcode),
             // DecodingError::InvalidIndex => write!(f, "Invalid index"),
             // DecodingError::UnknownSection(section_id) => write!(f, "Unknown section ID: {}", section_id),
             // DecodingError::UnsupportedFeature(feature) => write!(f, "Unsupported feature: {}", feature),
