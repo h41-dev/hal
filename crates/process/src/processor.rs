@@ -1,7 +1,6 @@
 use alloc::boxed::Box;
 use alloc::string::String;
 use alloc::vec;
-use core::f32::consts::E;
 use core::ops::ControlFlow;
 use core::ops::ControlFlow::Continue;
 
@@ -11,7 +10,6 @@ use hal_core::module::FunctionAddress;
 use module::FunctionLocal;
 
 use crate::process::Process;
-pub(crate) mod invoke;
 
 #[cfg_attr(any(test, debug_assertions), derive(Debug))]
 pub struct Processor {}
@@ -106,7 +104,7 @@ impl Processor {
                     let result = left - right;
                     process.stack.push(result);
                 }
-                _ =>  return Err(Trap::NotImplemented(TrapNotImplemented::Instruction(inst.clone())))
+                _ => return Err(Trap::NotImplemented(TrapNotImplemented::Instruction(inst.clone())))
             }
         }
         Ok(())

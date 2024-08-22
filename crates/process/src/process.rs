@@ -2,9 +2,9 @@ use alloc::vec::Vec;
 
 use hal_core::module::{FunctionLocal, Value, ValueType};
 use hal_core::Trap;
+use crate::frame::Frame;
+use crate::ProcessState;
 
-use crate::process::frame::Frame;
-use crate::process::state::ProcessState;
 
 #[cfg_attr(any(test, debug_assertions), derive(Debug))]
 pub struct Process {
