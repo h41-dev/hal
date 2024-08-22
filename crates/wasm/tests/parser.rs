@@ -129,9 +129,9 @@ mod tests {
         assert_eq!(result.codes.as_ref(), [WasmFunctionBody {
             locals: Box::default(),
             code: Box::new([
-                WasmInstruction::LocalGet(0),
-                WasmInstruction::LocalGet(1),
-                WasmInstruction::I32Add,
+                WasmInstruction::LocalGet32(0),
+                WasmInstruction::LocalGet32(1),
+                WasmInstruction::AddI32,
                 WasmInstruction::End,
             ]),
         }]);
@@ -176,7 +176,7 @@ mod tests {
             WasmFunctionBody {
                 locals: Box::default(),
                 code: Box::new([
-                    WasmInstruction::LocalGet(0),
+                    WasmInstruction::LocalGet32(0),
                     WasmInstruction::Call(1),
                     WasmInstruction::End,
                 ]),
@@ -184,9 +184,9 @@ mod tests {
             WasmFunctionBody {
                 locals: Box::default(),
                 code: Box::new([
-                    WasmInstruction::LocalGet(0),
-                    WasmInstruction::LocalGet(0),
-                    WasmInstruction::I32Add,
+                    WasmInstruction::LocalGet32(0),
+                    WasmInstruction::LocalGet32(0),
+                    WasmInstruction::AddI32,
                     WasmInstruction::End,
                 ]),
             }]);
@@ -232,7 +232,7 @@ mod tests {
             WasmFunctionBody {
                 locals: Box::default(),
                 code: Box::new([
-                    WasmInstruction::LocalGet(0),
+                    WasmInstruction::LocalGet32(0),
                     WasmInstruction::Call(0),
                     WasmInstruction::End,
                 ]),
@@ -277,10 +277,10 @@ mod tests {
             WasmFunctionBody {
                 locals: Box::default(),
                 code: Box::new([
-                    WasmInstruction::I32Const(0),
-                    WasmInstruction::I32Const(42),
-                    WasmInstruction::I32Store {
-                        flag: 2,
+                    WasmInstruction::ConstI32(0),
+                    WasmInstruction::ConstI32(42),
+                    WasmInstruction::StoreI32 {
+                        flags: 2,
                         offset: 0,
                     },
                     WasmInstruction::End,

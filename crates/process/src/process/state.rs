@@ -1,15 +1,13 @@
 use alloc::boxed::Box;
 use alloc::rc::Rc;
 use alloc::string::String;
-use alloc::vec::Vec;
 
-use hal_core::{module, Trap};
+use hal_core::{module, Trap, TrapNotFound};
 use hal_core::module::{Export, Memory};
 use hal_core::module::FunctionAddress;
 use hal_core::module::MemoryAddress;
 use hal_core::module::Module;
 use module::Function;
-
 
 #[cfg_attr(any(test, debug_assertions), derive(Debug))]
 pub enum ProcessStateError {
@@ -49,17 +47,17 @@ impl ProcessState {
     }
 
     pub fn function(&self, addr: FunctionAddress) -> Result<Rc<Function>, Trap> {
-        self.functions.get(addr as usize).ok_or(Trap::NotFoundLocalFunction(addr)).map(|rc| rc.clone())
+        self.functions.get(addr as usize).ok_or(Trap::NotFound(TrapNotFound::FunctionLocal(addr))).map(|rc| rc.clone())
     }
 
     pub fn export(&self, name: impl Into<String>) -> Result<Rc<Export>, Trap> {
         let name = name.into();
         self.exports.iter().find(|export| export.name().eq(&name))
             .map(|rc| rc.clone())
-            .ok_or(Trap::NotFoundExportedFunction(name))
+            .ok_or(Trap::NotFound(TrapNotFound::ExportedFunction(name)))
     }
 
     pub fn memory(&self, addr: MemoryAddress) -> Result<Rc<Memory>, Trap> {
-        self.memories.get(addr as usize).ok_or(Trap::NotFoundMemory(addr)).map(|rc| rc.clone())
+        self.memories.get(addr as usize).ok_or(Trap::NotFound(TrapNotFound::Memory(addr))).map(|rc| rc.clone())
     }
 }

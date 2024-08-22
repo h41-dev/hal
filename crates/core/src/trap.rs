@@ -1,17 +1,27 @@
 use alloc::string::String;
+
 use crate::module::{FunctionAddress, MemoryAddress};
 
 #[cfg_attr(any(test, debug_assertions), derive(Debug))]
 #[derive(PartialEq)]
-pub enum Trap{
+pub enum Trap {
     DivisionByZero,
-    IntegerOverflow,
 
-    NotFoundExportedFunction(String),
-    NotFoundFunction(String),
-    NotFoundMemory(MemoryAddress),
-    NotFoundModule(String),
-    NotFoundReturnValue,
+    NotFound(TrapNotFound),
 
-    NotFoundLocalFunction(FunctionAddress),
+    OverflowInteger,
+    OverflowStack,
+
+    UnderflowStack,
+}
+
+#[cfg_attr(any(test, debug_assertions), derive(Debug))]
+#[derive(PartialEq)]
+pub enum TrapNotFound {
+    ExportedFunction(String),
+    Function(String),
+    FunctionLocal(FunctionAddress),
+    Memory(MemoryAddress),
+    Module(String),
+    ReturnValue,
 }

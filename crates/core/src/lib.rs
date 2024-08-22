@@ -2,15 +2,16 @@
 #![warn(missing_docs, missing_debug_implementations, rust_2018_idioms, unreachable_pub)]
 #![forbid(unsafe_code)]
 
-extern crate core;
 extern crate alloc;
+extern crate core;
 
-pub use trap::Trap;
 pub use error::Error;
+pub use trap::*;
 
-pub mod module;
 pub mod constant;
 pub mod leb128;
+pub mod error;
+pub mod module;
 pub mod reader;
 mod trap;
-mod error;
+

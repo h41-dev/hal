@@ -109,8 +109,6 @@ pub enum Instruction {
     GtUI32,
     GtUI64,
 
-    Invoke(FunctionAddress),
-
     LeF32,
     LeF64,
     LeSI32,

@@ -107,8 +107,6 @@ pub enum WasmInstruction {
     GtUI32,
     GtUI64,
 
-    Invoke(u32),
-
     LeF32,
     LeF64,
     LeSI32,
@@ -344,7 +342,6 @@ impl From<WasmInstruction> for Instruction {
             WasmInstruction::GtSI64 => Instruction::GtSI64,
             WasmInstruction::GtUI32 => Instruction::GtUI32,
             WasmInstruction::GtUI64 => Instruction::GtUI64,
-            WasmInstruction::Invoke(a) => Instruction::Invoke(a),
             WasmInstruction::LeF32 => Instruction::LeF32,
             WasmInstruction::LeF64 => Instruction::LeF64,
             WasmInstruction::LeSI32 => Instruction::LeSI32,

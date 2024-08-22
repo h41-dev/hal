@@ -4,7 +4,7 @@ use alloc::vec;
 use core::ops::ControlFlow;
 use core::ops::ControlFlow::Continue;
 
-use hal_core::{module, Trap};
+use hal_core::{module, Trap, TrapNotFound};
 use hal_core::module::{ExportData, Function, Instruction, MemoryAddress, Value};
 use hal_core::module::FunctionAddress;
 use module::FunctionLocal;
@@ -85,7 +85,7 @@ impl Processor {
                     let result = left + right;
                     process.stack.push(result);
                 }
-                Instruction::Invoke(addr) => {
+                Instruction::Call(addr) => {
                     let function = process.state.function(*addr).unwrap();
                     let func_inst = match &*function {
                         Function::Local(local) => process.push_frame(local)
@@ -122,7 +122,7 @@ impl Processor {
         let name = name.into();
 
         let idx = match process.state.export(name.clone())
-            .or_else(|_| Err(Trap::NotFoundExportedFunction(name)))
+            .or_else(|_| Err(Trap::NotFound(TrapNotFound::ExportedFunction(name))))
             .unwrap()
             .data()
         {
