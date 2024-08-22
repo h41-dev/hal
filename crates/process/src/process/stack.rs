@@ -1,7 +1,7 @@
 use alloc::fmt;
 use alloc::vec::Vec;
 
-use hal_core::{Trap, TrapType, TrapUnderflow};
+use hal_core::{Trap, TrapOverflow, TrapType, TrapUnderflow};
 use hal_core::module::{Value, ValueType};
 
 #[cfg_attr(any(test, debug_assertions), derive(Debug))]
@@ -12,6 +12,8 @@ impl Default for CallFrame {
         Self {}
     }
 }
+
+pub(crate) const MAX_STACK_32_SIZE: usize = 1024 * 32;
 
 #[cfg_attr(any(test, debug_assertions), derive(Debug))]
 pub struct Stack {
@@ -139,6 +141,9 @@ impl Stack {
     }
 
     fn push_bytes(&mut self, bytes: &[u8], vt: ValueType) -> Result<()> {
+        if self.types.len() + 1 > MAX_STACK_32_SIZE {
+            return Err(Trap::Overflow(TrapOverflow::Stack));
+        }
         self.bytes.extend_from_slice(bytes);
         self.types.push(vt);
         Ok(())
@@ -176,6 +181,7 @@ impl Stack {
 
 #[cfg(test)]
 mod tests {
+
     use super::*;
 
     #[test]
@@ -189,10 +195,15 @@ mod tests {
         ti.push(i32::MAX).unwrap();
         ti.push(i32::MIN).unwrap();
 
+        assert_eq!(ti.peek::<i32>().unwrap(), i32::MIN);
         assert_eq!(ti.pop::<i32>().unwrap(), i32::MIN);
+        assert_eq!(ti.peek::<i32>().unwrap(), i32::MAX);
         assert_eq!(ti.pop::<i32>().unwrap(), i32::MAX);
+        assert_eq!(ti.peek::<i32>().unwrap(), -1);
         assert_eq!(ti.pop::<i32>().unwrap(), -1);
+        assert_eq!(ti.peek::<i32>().unwrap(), 1);
         assert_eq!(ti.pop::<i32>().unwrap(), 1);
+        assert_eq!(ti.peek::<i32>().unwrap(), 0);
         assert_eq!(ti.pop::<i32>().unwrap(), 0);
     }
 
@@ -200,17 +211,22 @@ mod tests {
     fn i32_value() {
         let mut ti = Stack::default();
         ti.push(Value::I32(0i32)).unwrap();
-        assert_eq!(ti.peek::<i32>().unwrap(), 0);
+        assert_eq!(ti.peek::<Value>().unwrap(), Value::I32(0));
 
         ti.push(Value::I32(1i32)).unwrap();
         ti.push(Value::I32(-1i32)).unwrap();
         ti.push(Value::I32(i32::MAX)).unwrap();
         ti.push(Value::I32(i32::MIN)).unwrap();
 
+        assert_eq!(ti.peek::<Value>().unwrap(), Value::I32(i32::MIN));
         assert_eq!(ti.pop::<Value>().unwrap(), Value::I32(i32::MIN));
+        assert_eq!(ti.peek::<Value>().unwrap(), Value::I32(i32::MAX));
         assert_eq!(ti.pop::<Value>().unwrap(), Value::I32(i32::MAX));
+        assert_eq!(ti.peek::<Value>().unwrap(), Value::I32(-1));
         assert_eq!(ti.pop::<Value>().unwrap(), Value::I32(-1));
+        assert_eq!(ti.peek::<Value>().unwrap(), Value::I32(1));
         assert_eq!(ti.pop::<Value>().unwrap(), Value::I32(1));
+        assert_eq!(ti.peek::<Value>().unwrap(), Value::I32(0));
         assert_eq!(ti.pop::<Value>().unwrap(), Value::I32(0));
     }
 
@@ -222,9 +238,13 @@ mod tests {
         ti.push(Value::I32(i32::MIN)).unwrap();
         ti.push(i32::MIN).unwrap();
 
+        assert_eq!(ti.peek::<i32>().unwrap(), i32::MIN);
         assert_eq!(ti.pop::<i32>().unwrap(), i32::MIN);
+        assert_eq!(ti.peek::<Value>().unwrap(), Value::I32(i32::MIN));
         assert_eq!(ti.pop::<Value>().unwrap(), Value::I32(i32::MIN));
+        assert_eq!(ti.peek::<i32>().unwrap(), i32::MAX);
         assert_eq!(ti.pop::<i32>().unwrap(), i32::MAX);
+        assert_eq!(ti.peek::<Value>().unwrap(), Value::I32(i32::MAX));
         assert_eq!(ti.pop::<Value>().unwrap(), Value::I32(i32::MAX));
     }
 
@@ -239,10 +259,15 @@ mod tests {
         ti.push(i64::MAX).unwrap();
         ti.push(i64::MIN).unwrap();
 
+        assert_eq!(ti.peek::<i64>().unwrap(), i64::MIN);
         assert_eq!(ti.pop::<i64>().unwrap(), i64::MIN);
+        assert_eq!(ti.peek::<i64>().unwrap(), i64::MAX);
         assert_eq!(ti.pop::<i64>().unwrap(), i64::MAX);
+        assert_eq!(ti.peek::<i64>().unwrap(), -1);
         assert_eq!(ti.pop::<i64>().unwrap(), -1);
+        assert_eq!(ti.peek::<i64>().unwrap(), 1);
         assert_eq!(ti.pop::<i64>().unwrap(), 1);
+        assert_eq!(ti.peek::<i64>().unwrap(), 0);
         assert_eq!(ti.pop::<i64>().unwrap(), 0);
     }
 
@@ -250,17 +275,22 @@ mod tests {
     fn i64_value() {
         let mut ti = Stack::default();
         ti.push(Value::I64(0i64)).unwrap();
-        assert_eq!(ti.peek::<i64>().unwrap(), 0);
+        assert_eq!(ti.peek::<Value>().unwrap(), Value::I64(0));
 
         ti.push(Value::I64(1i64)).unwrap();
         ti.push(Value::I64(-1i64)).unwrap();
         ti.push(Value::I64(i64::MAX)).unwrap();
         ti.push(Value::I64(i64::MIN)).unwrap();
 
+        assert_eq!(ti.peek::<Value>().unwrap(), Value::I64(i64::MIN));
         assert_eq!(ti.pop::<Value>().unwrap(), Value::I64(i64::MIN));
+        assert_eq!(ti.peek::<Value>().unwrap(), Value::I64(i64::MAX));
         assert_eq!(ti.pop::<Value>().unwrap(), Value::I64(i64::MAX));
+        assert_eq!(ti.peek::<Value>().unwrap(), Value::I64(-1));
         assert_eq!(ti.pop::<Value>().unwrap(), Value::I64(-1));
+        assert_eq!(ti.peek::<Value>().unwrap(), Value::I64(1));
         assert_eq!(ti.pop::<Value>().unwrap(), Value::I64(1));
+        assert_eq!(ti.peek::<Value>().unwrap(), Value::I64(0));
         assert_eq!(ti.pop::<Value>().unwrap(), Value::I64(0));
     }
 
@@ -272,9 +302,86 @@ mod tests {
         ti.push(Value::I64(i64::MIN)).unwrap();
         ti.push(i64::MIN).unwrap();
 
+        assert_eq!(ti.peek::<i64>().unwrap(), i64::MIN);
         assert_eq!(ti.pop::<i64>().unwrap(), i64::MIN);
+        assert_eq!(ti.peek::<Value>().unwrap(), Value::I64(i64::MIN));
         assert_eq!(ti.pop::<Value>().unwrap(), Value::I64(i64::MIN));
+        assert_eq!(ti.peek::<i64>().unwrap(), i64::MAX);
         assert_eq!(ti.pop::<i64>().unwrap(), i64::MAX);
+        assert_eq!(ti.peek::<Value>().unwrap(), Value::I64(i64::MAX));
         assert_eq!(ti.pop::<Value>().unwrap(), Value::I64(i64::MAX));
+    }
+
+    #[test]
+    fn type_mismatch_on_pop() {
+        let mut ti = Stack::default();
+        ti.push(42i32).unwrap();
+
+        let result: Result<i64> = ti.pop();
+        assert_eq!(
+            result,
+            Err(Trap::Type(TrapType::Mismatch(ValueType::I64, ValueType::I32)))
+        );
+    }
+
+    #[test]
+    fn type_mismatch_on_pop_value() {
+        let mut ti = Stack::default();
+        ti.push(Value::I32(23)).unwrap();
+        let result: Result<i64> = ti.pop();
+        assert_eq!(
+            result,
+            Err(Trap::Type(TrapType::Mismatch(ValueType::I64, ValueType::I32)))
+        );
+    }
+
+    #[test]
+    fn type_mismatch_on_peek() {
+        let mut ti = Stack::default();
+        ti.push(42i32).unwrap();
+        let result: Result<i64> = ti.peek();
+        assert_eq!(
+            result,
+            Err(Trap::Type(TrapType::Mismatch(ValueType::I64, ValueType::I32)))
+        );
+    }
+
+    #[test]
+    fn type_mismatch_on_peek_value() {
+        let mut ti = Stack::default();
+        ti.push(Value::I32(23)).unwrap();
+        let result: Result<i64> = ti.peek();
+        assert_eq!(
+            result,
+            Err(Trap::Type(TrapType::Mismatch(ValueType::I64, ValueType::I32)))
+        );
+    }
+
+    #[test]
+    fn stack_underflow_on_pop() {
+        let mut ti = Stack::default();
+        let result: Result<i32> = ti.pop();
+        assert_eq!(result, Err(Trap::Underflow(TrapUnderflow::Stack)));
+    }
+
+    #[test]
+    fn stack_underflow_on_peek() {
+        let mut ti = Stack::default();
+        let result: Result<i32> = ti.peek();
+        assert_eq!(result, Err(Trap::Underflow(TrapUnderflow::Stack)));
+    }
+
+    #[test]
+    fn stack_overflow() {
+        let mut ti = Stack::default();
+        for i in 0..MAX_STACK_32_SIZE  {
+            ti.push(i as i32).unwrap()
+        }
+
+        let result: Result<()> = ti.push(42i32);
+        assert_eq!(
+            result,
+            Err(Trap::Overflow(TrapOverflow::Stack))
+        );
     }
 }
