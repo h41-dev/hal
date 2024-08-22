@@ -60,8 +60,30 @@ impl core::ops::Add for Value {
     type Output = Self;
     fn add(self, rhs: Self) -> Self::Output {
         match (self, rhs) {
-            (Value::I32(left), Value::I32(right)) => Value::I32(left + right),
-            (Value::I64(left), Value::I64(right)) => Value::I64(left + right),
+            (Value::I32(left), Value::I32(right)) => Value::I32(left.wrapping_add(right)),
+            (Value::I64(left), Value::I64(right)) => Value::I64(left.wrapping_add(right)),
+            _ => panic!("type mismatch"),
+        }
+    }
+}
+
+impl core::ops::Mul for Value {
+    type Output = Self;
+    fn mul(self, rhs: Self) -> Self::Output {
+        match (self, rhs) {
+            (Value::I32(left), Value::I32(right)) => Value::I32(left.wrapping_mul(right)),
+            (Value::I64(left), Value::I64(right)) => Value::I64(left.wrapping_mul(right)),
+            _ => panic!("type mismatch"),
+        }
+    }
+}
+
+impl core::ops::Sub for Value {
+    type Output = Self;
+    fn sub(self, rhs: Self) -> Self::Output {
+        match (self, rhs) {
+            (Value::I32(left), Value::I32(right)) => Value::I32(left.wrapping_sub(right)),
+            (Value::I64(left), Value::I64(right)) => Value::I64(left.wrapping_sub(right)),
             _ => panic!("type mismatch"),
         }
     }

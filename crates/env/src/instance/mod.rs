@@ -4,7 +4,8 @@ use alloc::string::String;
 
 use hal_core::module::{Memory, Value};
 use hal_core::module::MemoryAddress;
-use hal_process::{Process, Processor, Trap};
+use hal_core::Trap;
+use hal_process::{Process, Processor};
 
 #[cfg_attr(any(test, debug_assertions), derive(Debug))]
 pub struct Instance {

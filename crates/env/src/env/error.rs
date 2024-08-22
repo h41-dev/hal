@@ -1,7 +1,7 @@
 use alloc::string::{String, ToString};
 
 use hal_compile::CompilationError;
-use hal_process::Trap;
+use hal_core::Trap;
 use hal_wasm::WasmParseError;
 use hal_wat::WatParseError;
 

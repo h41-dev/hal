@@ -5,7 +5,12 @@
 extern crate core;
 extern crate alloc;
 
+pub use trap::Trap;
+pub use error::Error;
+
 pub mod module;
 pub mod constant;
 pub mod leb128;
 pub mod reader;
+mod trap;
+mod error;

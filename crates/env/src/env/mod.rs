@@ -6,7 +6,8 @@ use alloc::vec::Vec;
 
 use hal_compile::Compiler;
 use hal_core::module::{Module, ModuleId, Value};
-use hal_process::{Process, Processor, ProcessState, Trap};
+use hal_core::Trap;
+use hal_process::{Process, Processor, ProcessState};
 pub use load::{LoadWasm, LoadWat};
 pub use spawn::{SpawnWasm, SpawnWat};
 

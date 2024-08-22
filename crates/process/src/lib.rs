@@ -8,7 +8,6 @@ extern crate core;
 pub use crate::process::Process;
 pub use crate::process::state::ProcessState;
 pub use crate::processor::Processor;
-pub use crate::processor::trap::Trap;
 
 mod process;
 mod processor;

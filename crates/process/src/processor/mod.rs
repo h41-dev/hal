@@ -4,15 +4,12 @@ use alloc::vec;
 use core::ops::ControlFlow;
 use core::ops::ControlFlow::Continue;
 
-use hal_core::module;
+use hal_core::{module, Trap};
 use hal_core::module::{ExportData, Function, Instruction, MemoryAddress, Value};
 use hal_core::module::FunctionAddress;
 use module::FunctionLocal;
 
 use crate::process::Process;
-use crate::Trap;
-
-pub mod trap;
 pub(crate) mod invoke;
 
 #[cfg_attr(any(test, debug_assertions), derive(Debug))]
@@ -93,10 +90,22 @@ impl Processor {
                     let func_inst = match &*function {
                         Function::Local(local) => process.push_frame(local)
                     };
-
-
                 }
-                _ => todo!()
+                Instruction::MulI32 => {
+                    let (Some(right), Some(left)) = (process.stack.pop(), process.stack.pop()) else {
+                        panic!("not found any value in the stack");
+                    };
+                    let result = left * right;
+                    process.stack.push(result);
+                }
+                Instruction::SubI32 => {
+                    let (Some(right), Some(left)) = (process.stack.pop(), process.stack.pop()) else {
+                        panic!("not found any value in the stack");
+                    };
+                    let result = left - right;
+                    process.stack.push(result);
+                }
+                _ => todo!("Instruction {:?} not supported yet", inst)
             }
         }
         Ok(())
@@ -146,7 +155,7 @@ fn invoke_internal(process: &mut Process, engine: &Processor, func: &FunctionLoc
 
     if let Err(e) = engine.execute(process) {
         // self.cleanup();
-        panic!("failed to execute instructions: {}", e)
+        panic!("failed to execute instructions: {:?}", e)
     };
 
     // if arity > 0 {
@@ -159,11 +168,11 @@ fn invoke_internal(process: &mut Process, engine: &Processor, func: &FunctionLoc
 
     let mut result = vec![];
 
-    for _ in 0 .. arity{
-            let Some(value) = process.stack.pop() else {
-                panic!("not found return value")
-            };
-         result.push(value);
+    for _ in 0..arity {
+        let Some(value) = process.stack.pop() else {
+            panic!("not found return value")
+        };
+        result.push(value);
     }
 
     Ok(result.into())

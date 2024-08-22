@@ -3,14 +3,13 @@ use alloc::rc::Rc;
 use alloc::string::String;
 use alloc::vec::Vec;
 
-use hal_core::module;
+use hal_core::{module, Trap};
 use hal_core::module::{Export, Memory};
 use hal_core::module::FunctionAddress;
 use hal_core::module::MemoryAddress;
 use hal_core::module::Module;
 use module::Function;
 
-use crate::Trap;
 
 #[cfg_attr(any(test, debug_assertions), derive(Debug))]
 pub enum ProcessStateError {
