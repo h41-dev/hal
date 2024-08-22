@@ -3,7 +3,7 @@ use core::cell::RefCell;
 
 
 pub type MemoryOffset = u32;
-pub type MemoryFlag = u32;
+pub type MemoryFlags = u32;
 pub type MemoryAddress = u32;
 
 #[cfg_attr(any(test, debug_assertions), derive(Debug))]

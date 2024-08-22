@@ -38,13 +38,13 @@ impl Processor {
             };
 
             match inst {
-                Instruction::LocalGet(addr) => {
+                Instruction::LocalGet32(addr) => {
                     let Some(value) = frame.locals.get(*addr as usize) else {
                         panic!("not found local");
                     };
                     process.stack.push(value.clone());
                 }
-                Instruction::LocalSet(addr) => {
+                Instruction::LocalSet32(addr) => {
                     let Some(value) = process.stack.pop() else {
                         panic!("not found value in the stack");
                     };
@@ -56,7 +56,7 @@ impl Processor {
                 }
                 Instruction::ConstI32(value) => process.stack.push(Value::I32(*value)),
                 Instruction::ConstI64(value) => process.stack.push(Value::I64(*value)),
-                Instruction::StoreI32 { flag: _, offset } => {
+                Instruction::StoreI32 { flags: _, offset } => {
                     let (Some(value), Some(addr)) = (process.stack.pop(), process.stack.pop()) else {
                         panic!("not found any value in the stack");
                     };
@@ -96,7 +96,6 @@ impl Processor {
 
 
                 }
-
                 _ => todo!()
             }
         }

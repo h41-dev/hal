@@ -135,6 +135,15 @@ impl<'a> ByteReader<'a> {
         Ok(res)
     }
 
+    /// Reads a 32-bit float (`f32`) from the current reader position.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing the read `f32` value, or a `ParseError` if the read fails.
+    pub fn read_f32(&self) -> Result<f32> {
+        todo!()
+    }
+
     /// Reads a `u32` value encoded in LEB128 format from the current reader position.
     ///
     /// # Returns
@@ -147,6 +156,29 @@ impl<'a> ByteReader<'a> {
         Ok(result)
     }
 
+    /// Reads a 64-bit float (`f64`) from the current reader position.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing the read `f64` value, or a `ParseError` if the read fails.
+    pub fn read_f64(&self) -> Result<f64> {
+        todo!()
+    }
+
+
+    /// Reads a `u64` value encoded in LEB128 format from the current reader position.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing the decoded `u64` value, or a `ParseError` if the read fails.
+    pub fn read_leb128_u64(&self) -> Result<u64> {
+        // let (result, consumed) = u64::read_leb128(self.peek_range(5)?)?;
+        // let mut pos = self.pos.borrow_mut();
+        // *pos += consumed;
+        // Ok(result)
+        todo!()
+    }
+
     /// Reads an `i32` value encoded in LEB128 format from the current reader position.
     ///
     /// # Returns
@@ -157,6 +189,19 @@ impl<'a> ByteReader<'a> {
         let mut pos = self.pos.borrow_mut();
         *pos += consumed;
         Ok(result)
+    }
+
+    /// Reads an `i64` value encoded in LEB128 format from the current reader position.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing the decoded `i64` value, or a `ParseError` if the read fails.
+    pub fn read_leb128_i64(&self) -> Result<i64> {
+        // let (result, consumed) = i64::read_leb128(self.peek_range(5)?)?;
+        // let mut pos = self.pos.borrow_mut();
+        // *pos += consumed;
+        // Ok(result)
+        todo!()
     }
 
     /// Reads a 64-bit unsigned integer (`u64`) from the current reader position.
