@@ -1,7 +1,7 @@
 use alloc::string::String;
-use core::fmt::{Display, Formatter, write};
+use core::fmt::{Display, Formatter};
 
-use crate::module::{FunctionAddress, MemoryAddress};
+use crate::module::{FunctionAddress, MemoryAddress, ValueType};
 
 #[cfg_attr(any(test, debug_assertions), derive(Debug))]
 #[derive(PartialEq)]
@@ -11,10 +11,9 @@ pub enum Trap {
     NotFound(TrapNotFound),
     NotImplemented(TrapNotImplemented),
 
-    OverflowInteger,
-    OverflowStack,
-
-    UnderflowStack,
+    Overflow(TrapOverflow),
+    Type(TrapType),
+    Underflow(TrapUnderflow),
 }
 
 impl Display for Trap {
@@ -23,9 +22,9 @@ impl Display for Trap {
             Trap::DivisionByZero(t) => write!(f, "{}", t),
             Trap::NotFound(_) => todo!(),
             Trap::NotImplemented(t) => write!(f, "{}", t),
-            Trap::OverflowInteger => todo!(),
-            Trap::OverflowStack => todo!(),
-            Trap::UnderflowStack => todo!()
+            Trap::Overflow(t) => write!(f, "{}", t),
+            Trap::Type(t) => write!(f, "{}", t),
+            Trap::Underflow(t) => write!(f, "{}", t)
         }
     }
 }
@@ -65,6 +64,50 @@ impl Display for TrapNotImplemented {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         match self {
             TrapNotImplemented::Instruction(i) => write!(f, "instruction not implemented {:?}", i)
+        }
+    }
+}
+
+
+#[cfg_attr(any(test, debug_assertions), derive(Debug))]
+#[derive(PartialEq)]
+pub enum TrapOverflow {
+    Stack
+}
+
+impl Display for TrapOverflow {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        match self {
+            TrapOverflow::Stack => write!(f, "stack overflow")
+        }
+    }
+}
+
+#[cfg_attr(any(test, debug_assertions), derive(Debug))]
+#[derive(PartialEq)]
+pub enum TrapType {
+    Mismatch(ValueType, ValueType)
+}
+
+impl Display for TrapType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        match self {
+            TrapType::Mismatch(expected, got) => write!(f, "expected type {:?}, got {:?}", expected, got)
+        }
+    }
+}
+
+
+#[cfg_attr(any(test, debug_assertions), derive(Debug))]
+#[derive(PartialEq)]
+pub enum TrapUnderflow {
+    Stack
+}
+
+impl Display for TrapUnderflow {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        match self {
+            TrapUnderflow::Stack => write!(f, "stack underflow")
         }
     }
 }
