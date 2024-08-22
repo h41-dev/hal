@@ -3,7 +3,7 @@ extern crate std;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use wast::{QuoteWat, Wast, WastExecute};
+use wast::{QuoteWat, Wast, WastArg, WastExecute, WastRet};
 use wast::core::{WastArgCore, WastRetCore};
 use wast::lexer::Lexer;
 use wast::parser::ParseBuffer;
@@ -30,6 +30,8 @@ fn run_test(category: &str, file: &str) {
     for (i, directive) in wast_data.directives.into_iter().enumerate() {
         let span = directive.span();
         use wast::WastDirective::*;
+        let formatted_directive = format!("{:#?}", directive);
+
 
         match directive {
             Wat(module) => {
@@ -40,19 +42,18 @@ fn run_test(category: &str, file: &str) {
             }
 
             AssertReturn {
-                span, exec, results
+                span: _, exec, results
             } => {
-                let expected = map_wast_return_value(results.into_iter());
-
+                let expected = map_wast_return_value(&results);
                 match exec {
                     WastExecute::Invoke(invoke) => {
-                        let args = map_wast_args(invoke.args.into_iter());
+                        let args = map_wast_args(&invoke.args);
                         match env.invoke(invoke.name, args) {
                             Ok(results) => {
-                                assert_eq!(expected, results, "expected {:?}, got {:?}", expected, results)
+                                assert_eq!(expected, results, "{} - expected {:?}, got {:?}", formatted_directive, expected, results)
                             }
                             Err(e) => {
-                                panic!("{:?}", e)
+                                panic!("{} - {:?}", formatted_directive, e);
                             }
                         };
                     }
@@ -61,25 +62,41 @@ fn run_test(category: &str, file: &str) {
                 }
             }
 
-            AssertMalformed { span, mut module, message } => {}
+            AssertMalformed { .. } => { todo!() }
 
-            AssertInvalid { span, mut module, message: _ } => {}
+            AssertInvalid { .. } => { todo!() }
 
-            AssertExhaustion { call, message, span } => {}
+            AssertExhaustion { .. } => { todo!() }
 
-            AssertTrap { exec, message, span } => {}
+            AssertTrap { span: _, exec, message } => {
+                match exec {
+                    WastExecute::Invoke(invoke) => {
+                        let args = map_wast_args(&invoke.args);
+                        match env.invoke(invoke.name, args) {
+                            Ok(results) => {
+                                panic!("{} - expected trap, but got {:?}", formatted_directive, results)
+                            }
+                            Err(e) => {
+                                assert_eq!(message, format!("{}",e));
+                            }
+                        };
+                    }
+                    WastExecute::Wat(_) => todo!(),
+                    WastExecute::Get { .. } => todo!(),
+                }
+            }
 
-            AssertUnlinkable { mut module, span, message } => {}
+            AssertUnlinkable { .. } => { todo!() }
 
-            Invoke(invoke) => {}
+            Invoke(invoke) => { todo!() }
 
-            Register { span, name, .. } => {}
+            Register { .. } => { todo!() }
 
-            AssertException { .. } => {}
+            AssertException { .. } => { todo!() }
 
-            Thread(_) => {}
+            Thread(_) => { todo!() }
 
-            Wait { .. } => {}
+            Wait { .. } => { todo!() }
         }
     }
 }
@@ -97,13 +114,13 @@ fn read_quote_wat(module: QuoteWat) -> (Option<String>, Box<[u8]>) {
 }
 
 
-pub fn map_wast_return_value<'a>(args: impl Iterator<Item=wast::WastRet<'a>>) -> Box<[Value]> {
-    args.map(|ret| {
+pub fn map_wast_return_value(args: &Vec<WastRet>) -> Box<[Value]> {
+    args.into_iter().map(|ret| {
         let wast::WastRet::Core(ret) = ret else {
             panic!("unsupported type");
         };
         match ret {
-            WastRetCore::I32(v) => Value::I32(v),
+            WastRetCore::I32(v) => Value::I32(*v),
             WastRetCore::I64(_) => todo!(),
             WastRetCore::F32(_) => todo!(),
             WastRetCore::F64(_) => todo!(),
@@ -123,13 +140,13 @@ pub fn map_wast_return_value<'a>(args: impl Iterator<Item=wast::WastRet<'a>>) ->
 }
 
 
-pub fn map_wast_args<'a>(args: impl Iterator<Item=wast::WastArg<'a>>) -> Vec<Value> {
-    args.map(|ret| {
+pub fn map_wast_args(args: &Vec<WastArg>) -> Vec<Value> {
+    args.into_iter().map(|ret| {
         let wast::WastArg::Core(arg) = ret else {
             panic!("unsupported type");
         };
         match arg {
-            WastArgCore::I32(v) => Value::I32(v),
+            WastArgCore::I32(v) => Value::I32(*v),
             WastArgCore::I64(_) => todo!(),
             WastArgCore::F32(_) => todo!(),
             WastArgCore::F64(_) => todo!(),

@@ -1,10 +1,11 @@
 use alloc::boxed::Box;
 use alloc::string::String;
 use alloc::vec;
+use core::f32::consts::E;
 use core::ops::ControlFlow;
 use core::ops::ControlFlow::Continue;
 
-use hal_core::{module, Trap, TrapNotFound};
+use hal_core::{module, Trap, TrapNotFound, TrapNotImplemented};
 use hal_core::module::{ExportData, Function, Instruction, MemoryAddress, Value};
 use hal_core::module::FunctionAddress;
 use module::FunctionLocal;
@@ -105,7 +106,7 @@ impl Processor {
                     let result = left - right;
                     process.stack.push(result);
                 }
-                _ => todo!("Instruction {:?} not supported yet", inst)
+                _ =>  return Err(Trap::NotImplemented(TrapNotImplemented::Instruction(inst.clone())))
             }
         }
         Ok(())
@@ -155,7 +156,7 @@ fn invoke_internal(process: &mut Process, engine: &Processor, func: &FunctionLoc
 
     if let Err(e) = engine.execute(process) {
         // self.cleanup();
-        panic!("failed to execute instructions: {:?}", e)
+        return Err(e);
     };
 
     // if arity > 0 {

@@ -3,7 +3,7 @@ use crate::module::memory::MemoryOffset;
 use crate::module::MemoryFlags;
 
 #[cfg_attr(any(test, debug_assertions), derive(Debug))]
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub enum Instruction {
     AbsF32,
     AbsF64,
