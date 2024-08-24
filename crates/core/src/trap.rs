@@ -1,5 +1,5 @@
 use alloc::string::String;
-use core::fmt::{Display, Formatter};
+use core::fmt::{Display, Formatter, write};
 
 use crate::module::{FunctionAddress, MemoryAddress, ValueType};
 
@@ -12,6 +12,7 @@ pub enum Trap {
     NotImplemented(TrapNotImplemented),
 
     Overflow(TrapOverflow),
+
     Type(TrapType),
     Underflow(TrapUnderflow),
 }
@@ -24,7 +25,8 @@ impl Display for Trap {
             Trap::NotImplemented(t) => write!(f, "{}", t),
             Trap::Overflow(t) => write!(f, "{}", t),
             Trap::Type(t) => write!(f, "{}", t),
-            Trap::Underflow(t) => write!(f, "{}", t)
+            Trap::Underflow(t) => write!(f, "{}", t),
+
         }
     }
 }

@@ -2,6 +2,7 @@ use hal_core::{Trap, TrapDivisionByZero, TrapOverflow};
 
 pub(crate) trait Integer where Self: Sized {
     fn div_checked(self, rhs: Self) -> Result<Self, Trap>;
+    fn rem_wrapping(self, rhs: Self) -> Result<Self, Trap>;
 }
 
 impl Integer for i32 {
@@ -14,6 +15,14 @@ impl Integer for i32 {
             }
         })
     }
+
+    fn rem_wrapping(self, rhs: Self) -> Result<Self, Trap> {
+        if rhs == 0 {
+            Err(Trap::DivisionByZero(TrapDivisionByZero::Integer))
+        } else {
+            Ok(self.wrapping_rem(rhs))
+        }
+    }
 }
 
 impl Integer for u32 {
@@ -21,5 +30,13 @@ impl Integer for u32 {
         self.checked_div(rhs).ok_or_else(|| {
             Trap::DivisionByZero(TrapDivisionByZero::Integer)
         })
+    }
+
+    fn rem_wrapping(self, rhs: Self) -> Result<Self, Trap> {
+        if rhs == 0 {
+            Err(Trap::DivisionByZero(TrapDivisionByZero::Integer))
+        } else {
+            Ok(self % rhs)
+        }
     }
 }

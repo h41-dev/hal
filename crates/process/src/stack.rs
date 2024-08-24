@@ -110,6 +110,17 @@ impl StackAccess for i32 {
     }
 }
 
+impl StackAccess for u32 {
+    fn push(stack: &mut Stack, value: Self) -> Result<()> {
+        stack.push_bytes(&value.to_le_bytes(), ValueType::I32)
+    }
+
+    fn peek(stack: &Stack) -> Result<Self> {
+        stack.expect_type(ValueType::I32)?;
+        Ok(u32::from_le_bytes(stack.peek_bytes(size_of::<i32>())?))
+    }
+}
+
 impl StackAccess for i64 {
     fn push(stack: &mut Stack, value: Self) -> Result<()> {
         stack.push_bytes(&value.to_le_bytes(), ValueType::I64)

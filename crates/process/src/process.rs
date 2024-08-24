@@ -5,9 +5,9 @@ use alloc::vec::Vec;
 use hal_core::module::{Export, Function, FunctionAddress, FunctionLocal, Memory, MemoryAddress, Value, ValueType};
 use hal_core::Trap;
 
-use crate::Store;
 use crate::Result;
 use crate::stack::{CallFrame, Stack, StackAccess};
+use crate::Store;
 
 #[cfg_attr(any(test, debug_assertions), derive(Debug))]
 pub struct Process {
@@ -17,7 +17,6 @@ pub struct Process {
 
 
 impl Process {
-
     pub fn new(state: Store) -> Self {
         Self {
             state,
@@ -37,7 +36,6 @@ impl Process {
         self.state.memory(addr)
     }
 
-    // https://webassembly.github.io/spec/core/exec/instructions.html#exec-unop
     pub(crate) fn unary<T, F>(&mut self, op: F) -> Result<()>
         where
             T: StackAccess,
@@ -47,29 +45,45 @@ impl Process {
         self.stack.push(result)
     }
 
-    // https://webassembly.github.io/spec/core/exec/instructions.html#exec-binop
     pub(crate) fn binary<T, F>(&mut self, op: F) -> Result<()>
         where
             T: StackAccess,
             F: FnOnce(T, T) -> T,
     {
-        let lhs = self.stack.pop()?;
-        let rhs = self.stack.pop()?;
-        self.stack.push(op(lhs, rhs))
+        let l = self.stack.pop()?;
+        let r = self.stack.pop()?;
+        self.stack.push(op(l, r))
     }
 
-    // https://webassembly.github.io/spec/core/exec/instructions.html#exec-binop
     pub(crate) fn binary_trap<T, F>(&mut self, op: F) -> Result<()>
         where
             T: StackAccess,
             F: FnOnce(T, T) -> Result<T>,
     {
-        let lhs = self.stack.pop()?;
-        let rhs = self.stack.pop()?;
-        self.stack.push(op(lhs, rhs)?)
+        let l = self.stack.pop()?;
+        let r = self.stack.pop()?;
+        self.stack.push(op(l, r)?)
     }
 
+    pub(crate) fn unary_test<T, F>(&mut self, op: F) -> Result<()>
+        where
+            T: StackAccess,
+            F: FnOnce(T) -> bool,
+    {
+        let result = op(self.stack.pop()?);
+        self.stack.push(if result { Value::I32(1) } else { Value::I32(0) })
+    }
 
+    pub(crate) fn binary_test<T, F>(&mut self, op: F) -> Result<()>
+        where
+            T: StackAccess,
+            F: FnOnce(T, T) -> bool,
+    {
+        let l = self.stack.pop()?;
+        let r = self.stack.pop()?;
+        let result = op(l, r);
+        self.stack.push(if result { Value::I32(1) } else { Value::I32(0) })
+    }
 
     pub(crate) fn push_frame(&mut self, func: &FunctionLocal) -> Result<CallFrame> {
         let mut locals = Vec::with_capacity(func.parameter_count());
