@@ -7,7 +7,7 @@ use alloc::vec::Vec;
 use hal_compile::Compiler;
 use hal_core::module::{Module, ModuleId, Value};
 use hal_core::Trap;
-use hal_process::{Process, Processor, ProcessState};
+use hal_process::{Process, Processor, Store};
 pub use load::{LoadWasm, LoadWat};
 pub use spawn::{SpawnWasm, SpawnWat};
 
@@ -51,7 +51,7 @@ impl Environment {
     pub fn instantiate(&mut self, id: ModuleId) -> Result<&mut Instance, EnvironmentError> {
         let module = self.modules.get(id as usize).unwrap();
 
-        let process_state = ProcessState::new(&module).unwrap();
+        let process_state = Store::new(&module).unwrap();
         let instance = Instance {
             processor: Rc::downgrade(&self.processor),
             process: Process::new(process_state),

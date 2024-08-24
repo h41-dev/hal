@@ -5,19 +5,20 @@ use alloc::vec::Vec;
 use hal_core::module::{Export, Function, FunctionAddress, FunctionLocal, Memory, MemoryAddress, Value, ValueType};
 use hal_core::Trap;
 
-use crate::ProcessState;
+use crate::Store;
 use crate::Result;
 use crate::stack::{CallFrame, Stack, StackAccess};
 
 #[cfg_attr(any(test, debug_assertions), derive(Debug))]
 pub struct Process {
-    pub(crate) state: ProcessState,
+    pub(crate) state: Store,
     pub(crate) stack: Stack,
 }
 
 
 impl Process {
-    pub fn new(state: ProcessState) -> Self {
+
+    pub fn new(state: Store) -> Self {
         Self {
             state,
             stack: Stack::default(),
@@ -35,7 +36,6 @@ impl Process {
     pub fn memory(&self, addr: MemoryAddress) -> core::result::Result<Rc<Memory>, Trap> {
         self.state.memory(addr)
     }
-
 
     // https://webassembly.github.io/spec/core/exec/instructions.html#exec-unop
     fn unary<T, F>(&mut self, op: F) -> Result<()>

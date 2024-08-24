@@ -9,12 +9,12 @@ use hal_core::Trap;
 
 pub use crate::process::Process;
 pub use crate::processor::Processor;
-pub use crate::state::ProcessState;
+pub use crate::store::Store;
 
 mod process;
 mod processor;
 mod stack;
-mod state;
+mod store;
 mod instruction;
 
 type Result<T> = core::result::Result<T, Trap>;

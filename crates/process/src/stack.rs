@@ -145,18 +145,63 @@ impl StackAccess for Value {
 
 
 impl Stack {
+    /// Pushes a value onto the stack.
+    ///
+    /// This function accepts any type that implements the `StackAccess` trait and pushes
+    /// it onto the stack. The actual pushing logic is delegated to the `StackAccess::push`
+    /// method, which handles the specific behavior for the value type.
+    ///
+    /// # Parameters
+    ///
+    /// - `v`: The value to be pushed onto the stack.
+    ///
+    /// # Returns
+    ///
+    /// - `Result<()>`: Returns `Ok(())` on success, or an error if the push operation fails.
     pub fn push<V: StackAccess>(&mut self, v: V) -> Result<()> {
         StackAccess::push(self, v)
     }
 
+    /// Peeks at the top value of the stack without removing it.
+    ///
+    /// This function retrieves the top value from the stack without modifying the stack's
+    /// state. The value is returned as a result, and the specific behavior depends on the
+    /// implementation of the `StackAccess::peek` method.
+    ///
+    /// # Returns
+    ///
+    /// - `Result<V>`: The top value on the stack, or an error if the peek operation fails.
     pub fn peek<V: StackAccess>(&mut self) -> Result<V> {
         StackAccess::peek(self)
     }
 
+    /// Pops the top value off the stack.
+    ///
+    /// This function removes and returns the top value from the stack. The actual pop logic
+    /// is handled by the `StackAccess::pop` method, which manages the specific behavior for
+    /// the value type.
+    ///
+    /// # Returns
+    ///
+    /// - `Result<V>`: The value that was popped from the stack, or an error if the pop operation fails.
     pub fn pop<V: StackAccess>(&mut self) -> Result<V> {
         StackAccess::pop(self)
     }
 
+    /// Pushes raw bytes onto the stack along with a specified value type.
+    ///
+    /// This internal function directly manipulates the stack by pushing a slice of bytes and
+    /// a corresponding `ValueType`. It checks for stack overflow before performing the push
+    /// operation.
+    ///
+    /// # Parameters
+    ///
+    /// - `bytes`: A slice of bytes to push onto the stack.
+    /// - `vt`: The `ValueType` associated with the bytes.
+    ///
+    /// # Returns
+    ///
+    /// - `Result<()>`: Returns `Ok(())` on success, or an error if the stack overflows.
     fn push_bytes(&mut self, bytes: &[u8], vt: ValueType) -> Result<()> {
         if self.types.len() + 1 > MAX_VALUE_STACK {
             return Err(Trap::Overflow(TrapOverflow::Stack));
@@ -166,12 +211,38 @@ impl Stack {
         Ok(())
     }
 
+    /// Pops raw bytes off the stack based on the specified size.
+    ///
+    /// This internal function removes a specified number of bytes from the top of the stack
+    /// and adjusts the stack's state accordingly. It checks for stack underflow before performing
+    /// the pop operation.
+    ///
+    /// # Parameters
+    ///
+    /// - `s`: The number of bytes to remove from the stack.
+    ///
+    /// # Returns
+    ///
+    /// - `Result<()>`: Returns `Ok(())` on success, or an error if the stack underflows.
     fn pop_bytes(&mut self, s: usize) -> Result<()> {
         self.bytes.truncate(self.bytes.len() - s);
         self.types.pop().ok_or(Trap::Underflow(TrapUnderflow::Stack))?;
         Ok(())
     }
 
+    /// Peeks at a specific number of bytes from the top of the stack.
+    ///
+    /// This internal function retrieves a slice of bytes from the top of the stack without
+    /// removing them. The bytes are converted to the specified type `T`, which must implement
+    /// the `TryFrom` trait.
+    ///
+    /// # Parameters
+    ///
+    /// - `s`: The number of bytes to peek at the top of the stack.
+    ///
+    /// # Returns
+    ///
+    /// - `Result<T>`: The converted value from the bytes, or an error if the conversion fails or the stack underflows.
     fn peek_bytes<'a, T>(&'a self, s: usize) -> Result<T>
         where
             T: TryFrom<&'a [u8]>,
@@ -181,6 +252,18 @@ impl Stack {
             .map_err(|_| Trap::Underflow(TrapUnderflow::Stack))?)
     }
 
+    /// Checks if the top value on the stack matches the expected type.
+    ///
+    /// This internal function compares the `ValueType` of the top value on the stack with
+    /// the expected type. If the types do not match, an error is returned.
+    ///
+    /// # Parameters
+    ///
+    /// - `expected`: The expected `ValueType` for the top value on the stack.
+    ///
+    /// # Returns
+    ///
+    /// - `Result<()>`: Returns `Ok(())` if the types match, or an error if they do not.
     fn expect_type(&self, expected: ValueType) -> Result<()> {
         let got = self.peek_type()?.clone();
         if got != expected {
@@ -190,11 +273,29 @@ impl Stack {
         }
     }
 
+    /// Peeks at the type of the top value on the stack.
+    ///
+    /// This internal function retrieves the `ValueType` of the top value on the stack without
+    /// removing it. This is useful for type-checking operations.
+    ///
+    /// # Returns
+    ///
+    /// - `Result<&ValueType>`: The type of the top value on the stack, or an error if the stack is empty.
     fn peek_type(&self) -> Result<&ValueType> {
         self.types.last().ok_or(Trap::Underflow(TrapUnderflow::Stack))
     }
 
-    pub(crate) fn len(&self) -> usize { self.types.len() }
+    /// Returns the current number of values on the stack.
+    ///
+    /// This function provides the current size of the stack, which is determined by the number
+    /// of `ValueType` entries.
+    ///
+    /// # Returns
+    ///
+    /// - `usize`: The number of values on the stack.
+    pub(crate) fn len(&self) -> usize {
+        self.types.len()
+    }
 
     /// Replaces the current call frame with a new one and returns the old frame.
     ///
@@ -214,6 +315,16 @@ impl Stack {
         mem::replace(&mut self.frame, frame)
     }
 
+    /// Restores a previous `CallFrame` as the current frame without returning the old one.
+    ///
+    /// This function replaces the current `CallFrame` with the provided one, effectively
+    /// restoring a previous state. Unlike `replace_frame`, this function does not return
+    /// the old frame, discarding it instead. This is useful in scenarios where the current
+    /// frame needs to be quickly swapped out without the need to retain the old frame.
+    ///
+    /// # Parameters
+    ///
+    /// - `frame`: The `CallFrame` to be restored as the current frame.
     pub(crate) fn restore(&mut self, frame: CallFrame) {
         _ = mem::replace(&mut self.frame, frame);
     }

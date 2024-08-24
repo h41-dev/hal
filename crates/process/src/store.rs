@@ -10,7 +10,7 @@ use hal_core::module::Module;
 use module::Function;
 
 #[cfg_attr(any(test, debug_assertions), derive(Debug))]
-pub enum ProcessStateError {
+pub enum StoreError {
     NotFoundFunction(String),
     NotFoundMemory(MemoryAddress),
     NotFoundModule(String),
@@ -18,27 +18,27 @@ pub enum ProcessStateError {
 }
 
 
-impl core::fmt::Display for ProcessStateError {
+impl core::fmt::Display for StoreError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
-            ProcessStateError::NotFoundFunction(name) => write!(f, "Function not found: {}", name),
-            ProcessStateError::NotFoundModule(name) => write!(f, "Module not found: {}", name),
-            ProcessStateError::NotFoundMemory(addr) => write!(f, "Memory not found: {}", addr),
-            ProcessStateError::NotFoundTypes => write!(f, "Types not found"),
+            StoreError::NotFoundFunction(name) => write!(f, "Function not found: {}", name),
+            StoreError::NotFoundModule(name) => write!(f, "Module not found: {}", name),
+            StoreError::NotFoundMemory(addr) => write!(f, "Memory not found: {}", addr),
+            StoreError::NotFoundTypes => write!(f, "Types not found"),
         }
     }
 }
 
 #[cfg_attr(any(test, debug_assertions), derive(Debug))]
-pub struct ProcessState {
+pub struct Store {
     functions: Box<[Rc<Function>]>,
     exports: Box<[Rc<Export>]>,
     memories: Box<[Rc<Memory>]>,
 }
 
 // FIXME own representation -- load from compiled module
-impl ProcessState {
-    pub fn new(module: &Module) -> Result<Self, ProcessStateError> {
+impl Store {
+    pub fn new(module: &Module) -> Result<Self, StoreError> {
         Ok(Self {
             functions: module.functions.clone(),
             exports: module.exports.clone(),

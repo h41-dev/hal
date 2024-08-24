@@ -3,7 +3,7 @@ use alloc::vec;
 use core::fmt::{Display, Formatter};
 
 use hal_core::module::ModuleId;
-use hal_process::{Process, ProcessState};
+use hal_process::{Process, Store};
 use hal_wasm::WasmParser;
 use hal_wat::WatParser;
 
