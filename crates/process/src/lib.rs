@@ -15,6 +15,5 @@ mod process;
 mod processor;
 mod stack;
 mod store;
-mod instruction;
 
 type Result<T> = core::result::Result<T, Trap>;

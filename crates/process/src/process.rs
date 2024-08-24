@@ -38,7 +38,7 @@ impl Process {
     }
 
     // https://webassembly.github.io/spec/core/exec/instructions.html#exec-unop
-    fn unary<T, F>(&mut self, op: F) -> Result<()>
+    pub(crate) fn unary<T, F>(&mut self, op: F) -> Result<()>
         where
             T: StackAccess,
             F: FnOnce(T) -> T,
@@ -48,7 +48,7 @@ impl Process {
     }
 
     // https://webassembly.github.io/spec/core/exec/instructions.html#exec-binop
-    fn binary<T, F>(&mut self, op: F) -> Result<()>
+    pub(crate) fn binary<T, F>(&mut self, op: F) -> Result<()>
         where
             T: StackAccess,
             F: FnOnce(T, T) -> T,
