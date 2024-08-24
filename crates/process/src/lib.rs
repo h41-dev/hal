@@ -11,6 +11,7 @@ pub use crate::process::Process;
 pub use crate::processor::Processor;
 pub use crate::store::Store;
 
+mod numeric;
 mod process;
 mod processor;
 mod stack;

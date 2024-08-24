@@ -72,13 +72,15 @@ impl Display for TrapNotImplemented {
 #[cfg_attr(any(test, debug_assertions), derive(Debug))]
 #[derive(PartialEq)]
 pub enum TrapOverflow {
-    Stack
+    Integer,
+    Stack,
 }
 
 impl Display for TrapOverflow {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         match self {
-            TrapOverflow::Stack => write!(f, "stack overflow")
+            TrapOverflow::Integer => write!(f, "integer overflow"),
+            TrapOverflow::Stack => write!(f, "stack overflow"),
         }
     }
 }

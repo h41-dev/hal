@@ -53,10 +53,22 @@ impl Process {
             T: StackAccess,
             F: FnOnce(T, T) -> T,
     {
-        let b = self.stack.pop()?;
-        let a = self.stack.pop()?;
-        self.stack.push(op(a, b))
+        let lhs = self.stack.pop()?;
+        let rhs = self.stack.pop()?;
+        self.stack.push(op(lhs, rhs))
     }
+
+    // https://webassembly.github.io/spec/core/exec/instructions.html#exec-binop
+    pub(crate) fn binary_trap<T, F>(&mut self, op: F) -> Result<()>
+        where
+            T: StackAccess,
+            F: FnOnce(T, T) -> Result<T>,
+    {
+        let lhs = self.stack.pop()?;
+        let rhs = self.stack.pop()?;
+        self.stack.push(op(lhs, rhs)?)
+    }
+
 
 
     pub(crate) fn push_frame(&mut self, func: &FunctionLocal) -> Result<CallFrame> {

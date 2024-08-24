@@ -7,6 +7,7 @@ use hal_core::module::{ExportData, Function, Instruction, MemoryAddress, Value};
 use hal_core::module::FunctionAddress;
 use module::FunctionLocal;
 
+use crate::numeric::Integer;
 use crate::process::Process;
 
 pub enum ProcessingState {
@@ -15,7 +16,7 @@ pub enum ProcessingState {
     Return,
 }
 
-type ProcessingResult = core::result::Result<ProcessingState, Trap>;
+type ProcessorResult = core::result::Result<ProcessingState, Trap>;
 
 // Processor might own processes
 #[cfg_attr(any(test, debug_assertions), derive(Debug))]
@@ -29,8 +30,6 @@ impl Default for Processor {
 }
 
 impl Processor {
-
-
     fn until_completion(&self, process: &mut Process) -> Result<(), Trap> {
         loop {
             match self.next(process) {
@@ -48,13 +47,36 @@ impl Processor {
 
     fn try_complete() {}
 
-    fn next(&self, process: &mut Process) -> ProcessingResult {
+    fn next(&self, process: &mut Process) -> ProcessorResult {
         let stack = &mut process.stack;
         stack.frame.ip += 1;
 
         let inst = { stack.frame.instructions.get(stack.frame.ip as usize).unwrap().clone() };
 
         match inst {
+            Instruction::AddI32 => process.binary(i32::wrapping_add)?,
+            Instruction::AddI64 => process.binary(i64::wrapping_add)?,
+
+            Instruction::Call(addr) => {
+                let function = process.state.function(addr).unwrap();
+                match &*function {
+                    Function::Local(local) => invoke_internal(process, self, local)?
+                };
+            }
+            Instruction::ConstI32(value) => process.stack.push(Value::I32(value))?,
+            Instruction::ConstI64(value) => process.stack.push(Value::I64(value))?,
+
+            Instruction::DivSI32 => process.binary_trap(i32::div_checked)?,
+            Instruction::DivUI32 => {
+                let lhs = process.stack.pop::<i32>()? as u32;
+                let rhs = process.stack.pop::<i32>()? as u32;
+                process.stack.push(lhs.div_checked(rhs)? as i32)?;
+            },
+
+            Instruction::End => { return Ok(ProcessingState::Return); }
+
+            Instruction::MulI32 => process.binary(i32::wrapping_mul)?,
+
             Instruction::LocalGet32(addr) => {
                 let Some(value) = stack.frame.locals.get(addr as usize) else {
                     panic!("not found local");
@@ -66,11 +88,7 @@ impl Processor {
                 let addr = addr as usize;
                 stack.frame.locals[addr] = value;
             }
-            Instruction::End => {
-                return Ok(ProcessingState::Return);
-            }
-            Instruction::ConstI32(value) => process.stack.push(Value::I32(value))?,
-            Instruction::ConstI64(value) => process.stack.push(Value::I64(value))?,
+
             Instruction::StoreI32 { flags: _, offset } => {
                 let (value, addr): (Value, Value) = (process.stack.pop()?, process.stack.pop()?);
 
@@ -88,25 +106,8 @@ impl Processor {
                 memory.data.borrow_mut()[at..end].copy_from_slice(&value.to_le_bytes());
             }
 
-            Instruction::AddI32 => process.binary(i32::wrapping_add).unwrap(),
-            Instruction::AddI64 => process.binary(i64::wrapping_add).unwrap(),
+            Instruction::SubI32 => process.binary(i32::wrapping_sub).unwrap(),
 
-            Instruction::Call(addr) => {
-                let function = process.state.function(addr).unwrap();
-                let func_inst = match &*function {
-                    Function::Local(local) => invoke_internal(process, self, local)
-                };
-            }
-            Instruction::MulI32 => {
-                let (right, left): (Value, Value) = (process.stack.pop()?, process.stack.pop()?);
-                let result = left * right;
-                process.stack.push(result)?;
-            }
-            // Instruction::SubI32 => {
-            //     let (right, left) = (process.stack.pop()?, process.stack.pop()?);
-            //     let result = left - right;
-            //     process.stack.push(result);
-            // }
             _ => return Err(Trap::NotImplemented(TrapNotImplemented::Instruction(inst.clone())))
         }
 
