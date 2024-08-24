@@ -1,29 +1,46 @@
+use alloc::boxed::Box;
 use alloc::fmt;
 use alloc::vec::Vec;
+use core::mem;
 
 use hal_core::{Trap, TrapOverflow, TrapType, TrapUnderflow};
-use hal_core::module::{Value, ValueType};
+use hal_core::module::{Instruction, Value, ValueType};
+
+use crate::Result;
+
+pub type InstructionPointer = isize;
+pub type StackPointer = usize;
+pub type Arity = usize;
 
 #[cfg_attr(any(test, debug_assertions), derive(Debug))]
-pub struct CallFrame {}
+pub struct CallFrame {
+    pub(crate) ip: InstructionPointer,
+    pub(crate) sp: StackPointer,
+    pub(crate) instructions: Box<[Instruction]>,
+    pub(crate) arity: Arity,
+    pub(crate) locals: Box<[Value]>,
+}
 
 impl Default for CallFrame {
     fn default() -> Self {
-        Self {}
+        Self {
+            ip: 0,
+            sp: 0,
+            instructions: Box::new([]),
+            arity: 0,
+            locals: Box::new([]),
+        }
     }
 }
 
-pub(crate) const MAX_STACK_32_SIZE: usize = 1024 * 32;
+pub(crate) const MAX_VALUE_STACK: usize = 1024 * 32;
 
 #[cfg_attr(any(test, debug_assertions), derive(Debug))]
 pub struct Stack {
-    // byte buffer of values
     bytes: Vec<u8>,
     types: Vec<ValueType>,
-    frame: CallFrame,
+    pub(crate) frame: CallFrame,
 }
-
-type Result<T> = core::result::Result<T, Trap>;
 
 /// A trait that defines stack operations for a specific type.
 /// This trait is intended to be implemented by types that can be pushed, popped, and peeked on a stack.
@@ -112,14 +129,14 @@ impl StackAccess for Value {
         }
     }
     fn pop(stack: &mut Stack) -> Result<Self> {
-        match stack.top_type()? {
+        match stack.peek_type()? {
             ValueType::I32 => StackAccess::pop(stack).map(|v| Value::I32(v)),
             ValueType::I64 => StackAccess::pop(stack).map(|v| Value::I64(v)),
         }
     }
 
     fn peek(stack: &Stack) -> Result<Self> {
-        match stack.top_type()? {
+        match stack.peek_type()? {
             ValueType::I32 => StackAccess::peek(stack).map(|v| Value::I32(v)),
             ValueType::I64 => StackAccess::peek(stack).map(|v| Value::I64(v)),
         }
@@ -141,7 +158,7 @@ impl Stack {
     }
 
     fn push_bytes(&mut self, bytes: &[u8], vt: ValueType) -> Result<()> {
-        if self.types.len() + 1 > MAX_STACK_32_SIZE {
+        if self.types.len() + 1 > MAX_VALUE_STACK {
             return Err(Trap::Overflow(TrapOverflow::Stack));
         }
         self.bytes.extend_from_slice(bytes);
@@ -165,7 +182,7 @@ impl Stack {
     }
 
     fn expect_type(&self, expected: ValueType) -> Result<()> {
-        let got = self.top_type()?.clone();
+        let got = self.peek_type()?.clone();
         if got != expected {
             Err(Trap::Type(TrapType::Mismatch(expected, got)))
         } else {
@@ -173,15 +190,38 @@ impl Stack {
         }
     }
 
-    fn top_type(&self) -> Result<&ValueType> {
+    fn peek_type(&self) -> Result<&ValueType> {
         self.types.last().ok_or(Trap::Underflow(TrapUnderflow::Stack))
+    }
+
+    pub(crate) fn len(&self) -> usize { self.types.len() }
+
+    /// Replaces the current call frame with a new one and returns the old frame.
+    ///
+    /// This function takes ownership of a new `CallFrame` and replaces the
+    /// current call frame stored within the object. The previous call frame
+    /// is returned as a result, allowing it to be further manipulated or
+    /// stored if needed.
+    ///
+    /// # Parameters
+    ///
+    /// - `frame`: The new `CallFrame` to be set as the current call frame.
+    ///
+    /// # Returns
+    ///
+    /// - The previous `CallFrame` that was replaced.
+    pub(crate) fn replace_frame(&mut self, frame: CallFrame) -> CallFrame {
+        mem::replace(&mut self.frame, frame)
+    }
+
+    pub(crate) fn restore(&mut self, frame: CallFrame) {
+        _ = mem::replace(&mut self.frame, frame);
     }
 }
 
 
 #[cfg(test)]
 mod tests {
-
     use super::*;
 
     #[test]
@@ -374,7 +414,7 @@ mod tests {
     #[test]
     fn stack_overflow() {
         let mut ti = Stack::default();
-        for i in 0..MAX_STACK_32_SIZE  {
+        for i in 0..MAX_VALUE_STACK {
             ti.push(i as i32).unwrap()
         }
 
@@ -383,5 +423,20 @@ mod tests {
             result,
             Err(Trap::Overflow(TrapOverflow::Stack))
         );
+    }
+
+    #[test]
+    fn len() {
+        let mut ti = Stack::default();
+        assert_eq!(ti.len(), 0);
+        ti.push(23i32).unwrap();
+        assert_eq!(ti.len(), 1);
+        ti.pop::<i32>().unwrap();
+        assert_eq!(ti.len(), 0);
+
+        let _ = ti.pop::<i32>();
+        let _ = ti.pop::<i32>();
+
+        assert_eq!(ti.len(), 0);
     }
 }

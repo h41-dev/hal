@@ -1,22 +1,71 @@
+use alloc::rc::Rc;
+use alloc::string::String;
 use alloc::vec::Vec;
 
-use hal_core::module::{FunctionLocal, Value, ValueType};
+use hal_core::module::{Export, Function, FunctionAddress, FunctionLocal, Memory, MemoryAddress, Value, ValueType};
 use hal_core::Trap;
-use crate::frame::Frame;
-use crate::ProcessState;
 
+use crate::ProcessState;
+use crate::Result;
+use crate::stack::{CallFrame, Stack, StackAccess};
 
 #[cfg_attr(any(test, debug_assertions), derive(Debug))]
 pub struct Process {
-    pub state: ProcessState,
-    pub stack: Vec<Value>,
-    pub call_stack: Vec<Frame>,
+    pub(crate) state: ProcessState,
+    pub(crate) stack: Stack,
 }
 
+
 impl Process {
-    pub(crate) fn push_frame(&mut self, func: &FunctionLocal) {
-        let bottom = self.stack.len() - func.parameter_count();
-        let mut locals = self.stack.split_off(bottom);
+    pub fn new(state: ProcessState) -> Self {
+        Self {
+            state,
+            stack: Stack::default(),
+        }
+    }
+
+    pub fn function(&self, addr: FunctionAddress) -> core::result::Result<Rc<Function>, Trap> {
+        self.state.function(addr)
+    }
+
+    pub fn export(&self, name: impl Into<String>) -> core::result::Result<Rc<Export>, Trap> {
+        self.export(name)
+    }
+
+    pub fn memory(&self, addr: MemoryAddress) -> core::result::Result<Rc<Memory>, Trap> {
+        self.state.memory(addr)
+    }
+
+
+    // https://webassembly.github.io/spec/core/exec/instructions.html#exec-unop
+    fn unary<T, F>(&mut self, op: F) -> Result<()>
+        where
+            T: StackAccess,
+            F: FnOnce(T) -> T,
+    {
+        let result = op(self.stack.pop()?);
+        self.stack.push(result)
+    }
+
+    // https://webassembly.github.io/spec/core/exec/instructions.html#exec-binop
+    fn binary<T, F>(&mut self, op: F) -> Result<()>
+        where
+            T: StackAccess,
+            F: FnOnce(T, T) -> T,
+    {
+        let b = self.stack.pop()?;
+        let a = self.stack.pop()?;
+        self.stack.push(op(a, b))
+    }
+
+
+    pub(crate) fn push_frame(&mut self, func: &FunctionLocal) -> Result<CallFrame> {
+        let mut locals = Vec::with_capacity(func.parameter_count());
+
+        for _ in func.parameters().iter() {
+            locals.push(self.stack.pop()?);
+        }
+
 
         for local in func.locals().iter() {
             match local {
@@ -27,35 +76,19 @@ impl Process {
 
         let arity = func.result_count();
 
-        let frame = Frame {
+        let frame = CallFrame {
             ip: -1,
             sp: self.stack.len(),
-            instructions: func.instructions(),
+            instructions: func.instructions().clone(),
             arity,
             locals: locals.into(),
         };
 
-        self.call_stack.push(frame);
+        Ok(self.stack.replace_frame(frame))
     }
 
-    #[inline(always)]
-    pub fn stack_unwind(&mut self) -> Result<(), Trap> {
-        let Some(frame) = self.call_stack.pop() else {
-            panic!("not found frame");
-        };
-        let Frame { sp, arity, .. } = frame;
-        let stack: &mut Vec<Value> = self.stack.as_mut();
 
-        if arity > 0 {
-            let Some(value) = stack.pop() else {
-                // return Err(ProcessorError::NotFoundReturnValue);
-                todo!() // FIXME
-            };
-            stack.drain(sp..);
-            stack.push(value);
-        } else {
-            stack.drain(sp..);
-        }
-        Ok(())
+    pub(crate) fn restore_frame(&mut self, frame: CallFrame) {
+        let _ = self.stack.restore(frame);
     }
 }

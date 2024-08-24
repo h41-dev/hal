@@ -1,6 +1,6 @@
 use alloc::boxed::Box;
 
-use crate::module::{ ValueType, ValueTypes};
+use crate::module::{ValueType, ValueTypes};
 use crate::module::instruction::Instruction;
 
 pub type LocalAddress = u32;
@@ -53,8 +53,10 @@ impl FunctionLocal {
         self.signature.params.len()
     }
 
+    pub fn parameters(&self) -> &ValueTypes { &self.signature.params }
+
     pub fn locals(&self) -> &[ValueType] { self.locals.as_ref() }
 
-    pub fn instructions(&self) -> Box<[Instruction]> { Box::from(self.instructions.clone()) }
+    pub fn instructions(&self) -> &Box<[Instruction]> { &self.instructions }
 }
 

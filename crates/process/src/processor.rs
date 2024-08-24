@@ -23,41 +23,41 @@ impl Default for Processor {
 impl Processor {
     fn execute(&self, process: &mut Process) -> Result<(), Trap> {
         loop {
-            let Some(frame) = process.call_stack.last_mut() else {
-                break;
-            };
+            // let Some(frame) = process.call_stack.last_mut() else {
+            //     break;
+            // };
 
-            frame.ip += 1;
+            let stack = &mut process.stack;
 
-            let Some(inst) = frame.instructions.get(frame.ip as usize) else {
-                break;
-            };
+
+            stack.frame.ip += 1;
+
+            let inst = { stack.frame.instructions.get(stack.frame.ip as usize).unwrap().clone() };
+
 
             match inst {
                 Instruction::LocalGet32(addr) => {
-                    let Some(value) = frame.locals.get(*addr as usize) else {
+                    let Some(value) = stack.frame.locals.get(addr as usize) else {
                         panic!("not found local");
                     };
-                    process.stack.push(value.clone());
+                    stack.push(value.clone())?;
                 }
                 Instruction::LocalSet32(addr) => {
-                    let Some(value) = process.stack.pop() else {
-                        panic!("not found value in the stack");
-                    };
-                    let addr = *addr as usize;
-                    frame.locals[addr] = value;
+                    let value = stack.pop()?;
+                    let addr = addr as usize;
+                    stack.frame.locals[addr] = value;
                 }
                 Instruction::End => {
-                    process.stack_unwind().unwrap()
+                    // process.stack_unwind().unwrap()
+                    return Ok(());
                 }
-                Instruction::ConstI32(value) => process.stack.push(Value::I32(*value)),
-                Instruction::ConstI64(value) => process.stack.push(Value::I64(*value)),
+                Instruction::ConstI32(value) => process.stack.push(Value::I32(value))?,
+                Instruction::ConstI64(value) => process.stack.push(Value::I64(value))?,
                 Instruction::StoreI32 { flags: _, offset } => {
-                    let (Some(value), Some(addr)) = (process.stack.pop(), process.stack.pop()) else {
-                        panic!("not found any value in the stack");
-                    };
+                    let (value, addr): (Value, Value) = (process.stack.pop()?, process.stack.pop()?);
+
                     let addr = Into::<i32>::into(addr) as usize;
-                    let offset = (*offset) as usize;
+                    let offset = (offset) as usize;
                     let at = addr + offset;
                     let end = at + size_of::<i32>();
 
@@ -71,39 +71,31 @@ impl Processor {
                 }
 
                 Instruction::AddI32 => {
-                    let (Some(right), Some(left)) = (process.stack.pop(), process.stack.pop()) else {
-                        panic!("not found any value in the stack");
-                    };
+                    let (right, left): (Value, Value) = (process.stack.pop()?, process.stack.pop()?);
                     let result = left + right;
-                    process.stack.push(result);
+                    process.stack.push(result)?;
                 }
                 Instruction::AddI64 => {
-                    let (Some(right), Some(left)) = (process.stack.pop(), process.stack.pop()) else {
-                        panic!("not found any value in the stack");
-                    };
+                    let (right, left): (Value, Value) = (process.stack.pop()?, process.stack.pop()?);
                     let result = left + right;
-                    process.stack.push(result);
+                    process.stack.push(result)?;
                 }
                 Instruction::Call(addr) => {
-                    let function = process.state.function(*addr).unwrap();
+                    let function = process.state.function(addr).unwrap();
                     let func_inst = match &*function {
-                        Function::Local(local) => process.push_frame(local)
+                        Function::Local(local) => invoke_internal(process, self, local)
                     };
                 }
                 Instruction::MulI32 => {
-                    let (Some(right), Some(left)) = (process.stack.pop(), process.stack.pop()) else {
-                        panic!("not found any value in the stack");
-                    };
+                    let (right, left): (Value, Value) = (process.stack.pop()?, process.stack.pop()?);
                     let result = left * right;
-                    process.stack.push(result);
+                    process.stack.push(result)?;
                 }
-                Instruction::SubI32 => {
-                    let (Some(right), Some(left)) = (process.stack.pop(), process.stack.pop()) else {
-                        panic!("not found any value in the stack");
-                    };
-                    let result = left - right;
-                    process.stack.push(result);
-                }
+                // Instruction::SubI32 => {
+                //     let (right, left) = (process.stack.pop()?, process.stack.pop()?);
+                //     let result = left - right;
+                //     process.stack.push(result);
+                // }
                 _ => return Err(Trap::NotImplemented(TrapNotImplemented::Instruction(inst.clone())))
             }
         }
@@ -129,50 +121,35 @@ impl Processor {
         };
 
         for arg in args.as_ref() {
-            process.stack.push(arg.clone());
+            process.stack.push(arg.clone())?;
         }
 
-        // let func_inst = process.state.function_ref(idx as FunctionIndex).unwrap();
-        //
-        // match func_inst {
-        //     Function::Local(func) => invoke_internal(process, self, func),
-        //     // Function::External(func) => invoke_external(fiber, func.clone())
-        // }
         let function = process.state.function(idx as FunctionAddress).unwrap();
         let func_inst = match &*function {
             Function::Local(local) => local
         };
 
-        invoke_internal(process, self, func_inst)
+        invoke_internal(process, self, func_inst)?;
+
+        let mut result = vec![];
+        for _ in 0..func_inst.result_count() {
+            let value = process.stack.pop()?;
+            result.push(value);
+        }
+        Ok(result.into())
     }
 }
 
-fn invoke_internal(process: &mut Process, engine: &Processor, func: &FunctionLocal) -> Result<Box<[Value]>, Trap> {
-    let arity = func.result_count();
 
-    process.push_frame(func);
+fn invoke_internal(process: &mut Process, engine: &Processor, func: &FunctionLocal) -> Result<(), Trap> {
+    let previous_frame = process.push_frame(func)?;
 
     if let Err(e) = engine.execute(process) {
         // self.cleanup();
+        // FIXME
         return Err(e);
     };
 
-    // if arity > 0 {
-    //     let Some(value) = process.stack.pop() else {
-    //         panic!("not found return value")
-    //     };
-    //     return Ok(Some(value));
-    // }
-    // Ok(None)
-
-    let mut result = vec![];
-
-    for _ in 0..arity {
-        let Some(value) = process.stack.pop() else {
-            panic!("not found return value")
-        };
-        result.push(value);
-    }
-
-    Ok(result.into())
+    process.restore_frame(previous_frame);
+    Ok(())
 }

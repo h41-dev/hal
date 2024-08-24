@@ -1,5 +1,5 @@
 use alloc::boxed::Box;
-use alloc::rc::{Rc, Weak};
+use alloc::rc::Rc;
 use alloc::string::String;
 use alloc::vec;
 use alloc::vec::Vec;
@@ -44,22 +44,17 @@ impl Environment {
     pub fn invoke(&mut self, name: impl Into<String>, args: impl AsRef<[Value]>) -> Result<Box<[Value]>, Trap> {
         // FIXME handle nothing intantiated yet
         let len = self.instances.len();
-        let instance=  self.instances.get_mut(len -1 ).unwrap();
+        let instance = self.instances.get_mut(len - 1).unwrap();
         instance.invoke(name, args)
-
     }
 
-    pub fn instantiate(& mut self, id: ModuleId) -> Result<&mut Instance, EnvironmentError> {
+    pub fn instantiate(&mut self, id: ModuleId) -> Result<&mut Instance, EnvironmentError> {
         let module = self.modules.get(id as usize).unwrap();
 
         let process_state = ProcessState::new(&module).unwrap();
         let instance = Instance {
             processor: Rc::downgrade(&self.processor),
-            process: Process {
-                state: process_state,
-                stack: vec![],
-                call_stack: vec![],
-            }.into(),
+            process: Process::new(process_state),
         };
 
 

@@ -21,6 +21,6 @@ impl Instance {
     }
 
     pub fn memory(&self, idx: MemoryAddress) -> Result<Rc<Memory>, Trap> {
-        self.process.state.memory(idx)
+        self.process.memory(idx)
     }
 }
