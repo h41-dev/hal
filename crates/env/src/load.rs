@@ -5,9 +5,7 @@ use hal_core::module::ModuleId;
 use hal_wasm::WasmParser;
 use hal_wat::WatParser;
 
-use crate::env::error::LoadError;
-use crate::env::source::{wasm_source, wat_source};
-use crate::Environment;
+use crate::{Environment, LoadError, wasm_source, wat_source};
 
 pub trait LoadWasm<SOURCE> {
     fn load(&mut self, source: SOURCE) -> Result<ModuleId, LoadError>;
@@ -50,8 +48,7 @@ impl<T: AsRef<str>> LoadWasm<wat_source::String<T>> for Environment {
 mod tests {
     mod wat {
         mod string {
-            use crate::{Environment, wat_source};
-            use crate::env::load::{LoadError, LoadWasm};
+            use crate::{Environment, LoadError, LoadWasm, wat_source};
 
             #[test]
             fn ok() {

@@ -5,11 +5,16 @@
 extern crate alloc;
 extern crate core;
 
-pub use env::{LoadWasm, LoadWat, SpawnWasm, SpawnWat};
 pub use env::Environment;
-pub use env::error::{EnvironmentError, LoadError};
-pub use env::source::{wasm_source, wat_source};
+pub use error::{EnvironmentError, LoadError};
 pub use instance::Instance;
+pub use load::{LoadWasm, LoadWat};
+pub use source::{wasm_source, wat_source};
+pub use spawn::{SpawnWasm, SpawnWat};
 
 mod env;
+mod source;
+mod error;
+mod load;
+mod spawn;
 mod instance;

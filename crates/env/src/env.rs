@@ -8,16 +8,7 @@ use hal_compile::Compiler;
 use hal_core::module::{Module, ModuleId, Value};
 use hal_core::Trap;
 use hal_process::{Process, Processor, Store};
-pub use load::{LoadWasm, LoadWat};
-pub use spawn::{SpawnWasm, SpawnWat};
-
-use crate::env::error::EnvironmentError;
-use crate::Instance;
-
-pub mod source;
-pub mod error;
-mod load;
-mod spawn;
+use crate::{EnvironmentError, Instance};
 
 
 #[cfg_attr(any(test, debug_assertions), derive(Debug))]

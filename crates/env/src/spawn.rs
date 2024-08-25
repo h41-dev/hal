@@ -1,10 +1,7 @@
 use hal_core::module::ModuleId;
 use hal_wat::WatParser;
 
-use crate::{Environment, Instance, wat_source};
-use crate::env::error::EnvironmentError;
-use crate::env::load::LoadWasm;
-use crate::env::source::wasm_source;
+use crate::{Environment, EnvironmentError, Instance, LoadWasm, wasm_source, wat_source};
 
 pub trait Spawn {
     fn spawn(&mut self, id: ModuleId) -> Result<&Instance, EnvironmentError>;
