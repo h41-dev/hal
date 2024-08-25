@@ -6,8 +6,8 @@
   (func $dummy3 (param i32 i32 i32))
 
   (func (export "type-i32") (result i32) (unreachable))
-  (func (export "type-i64") (result i32) (unreachable))
-  (func (export "type-f32") (result f64) (unreachable))
+  (func (export "type-i64") (result i64) (unreachable))
+  (func (export "type-f32") (result f32) (unreachable))
   (func (export "type-f64") (result f64) (unreachable))
 
   (func (export "as-func-first") (result i32)
@@ -106,6 +106,9 @@
   )
   (func (export "as-if-else") (param i32 i32) (result i32)
     (if (result i32) (local.get 0) (then (local.get 1)) (else (unreachable)))
+  )
+  (func (export "as-if-then-no-else") (param i32 i32) (result i32)
+    (if (local.get 0) (then (unreachable))) (local.get 1)
   )
 
   (func (export "as-select-first") (param i32 i32) (result i32)
@@ -255,6 +258,8 @@
 (assert_return (invoke "as-if-then" (i32.const 0) (i32.const 6)) (i32.const 6))
 (assert_trap (invoke "as-if-else" (i32.const 0) (i32.const 6)) "unreachable")
 (assert_return (invoke "as-if-else" (i32.const 1) (i32.const 6)) (i32.const 6))
+(assert_trap (invoke "as-if-then-no-else" (i32.const 1) (i32.const 6)) "unreachable")
+(assert_return (invoke "as-if-then-no-else" (i32.const 0) (i32.const 6)) (i32.const 6))
 
 (assert_trap (invoke "as-select-first" (i32.const 0) (i32.const 6)) "unreachable")
 (assert_trap (invoke "as-select-first" (i32.const 1) (i32.const 6)) "unreachable")

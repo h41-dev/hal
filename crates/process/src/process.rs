@@ -45,6 +45,25 @@ impl Process {
         self.stack.push(result)
     }
 
+    pub(crate) fn unary_test<T, F>(&mut self, op: F) -> Result<()>
+        where
+            T: StackAccess,
+            F: FnOnce(T) -> bool,
+    {
+        let result = op(self.stack.pop()?);
+        self.stack.push(if result { Value::I32(1) } else { Value::I32(0) })
+    }
+
+    pub(crate) fn unary_map<T,U, F>(&mut self, op: F) -> Result<()>
+        where
+            T: StackAccess,
+            U: StackAccess,
+            F: FnOnce(T) -> U,
+    {
+        let result = op(self.stack.pop()?);
+        self.stack.push(result)
+    }
+
     pub(crate) fn binary<T, F>(&mut self, op: F) -> Result<()>
         where
             T: StackAccess,
@@ -63,15 +82,6 @@ impl Process {
         let l = self.stack.pop()?;
         let r = self.stack.pop()?;
         self.stack.push(op(l, r)?)
-    }
-
-    pub(crate) fn unary_test<T, F>(&mut self, op: F) -> Result<()>
-        where
-            T: StackAccess,
-            F: FnOnce(T) -> bool,
-    {
-        let result = op(self.stack.pop()?);
-        self.stack.push(if result { Value::I32(1) } else { Value::I32(0) })
     }
 
     pub(crate) fn binary_test<T, F>(&mut self, op: F) -> Result<()>

@@ -6,6 +6,7 @@ use core::ops::{BitAnd, BitOr, BitXor};
 use hal_core::{module, Trap, TrapNotFound, TrapNotImplemented};
 use hal_core::module::{ExportData, Function, Instruction, MemoryAddress, Value};
 use hal_core::module::FunctionAddress;
+use hal_core::module::ValueType::I32;
 use module::FunctionLocal;
 
 use crate::numeric::Integer;
@@ -82,11 +83,18 @@ impl Processor {
             Instruction::DivUI64 => process.binary_trap(u64::div_checked)?,
 
             Instruction::End => { return Ok(ProcessingState::Return); }
+
             Instruction::EqI32 => process.binary_test(|l: i32, r| l == r)?,
             Instruction::EqI64 => process.binary_test(|l: i64, r| l == r)?,
 
             Instruction::EqzI32 => process.unary_test(|v: i32| v == 0)?,
             Instruction::EqzI64 => process.unary_test(|v: i64| v == 0)?,
+
+            Instruction::Extend8SI32 => process.unary_map(|v: i32| i32::from(v as i8))?,
+            Instruction::Extend8SI64 => process.unary_map(|v: i64| i64::from(v as i8))?,
+            Instruction::Extend16SI32 => process.unary_map(|v: i32| i32::from(v as i16))?,
+            Instruction::Extend16SI64 => process.unary_map(|v: i64| i64::from(v as i16))?,
+            Instruction::Extend32SI64 => process.unary_map(|v: i64| i64::from(v as i32))?,
 
             Instruction::GeSI32 => process.binary_test(|l: i32, r| l >= r)?,
             Instruction::GeSI64 => process.binary_test(|l: i64, r| l >= r)?,

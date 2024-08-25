@@ -9,6 +9,6 @@ macro_rules! test {
     };
 }
 
-
+// test!(f32);
 test!(i32);
 test!(i64);

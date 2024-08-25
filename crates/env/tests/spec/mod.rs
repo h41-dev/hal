@@ -139,7 +139,8 @@ pub fn map_wast_return_value(args: &Vec<WastRet>) -> Box<[Value]> {
             WastRetCore::RefArray => todo!(),
             WastRetCore::RefStruct => todo!(),
             WastRetCore::RefI31 => todo!(),
-            WastRetCore::Either(_) => todo!()
+            WastRetCore::Either(_) => todo!(),
+            WastRetCore::RefI31Shared => todo!(),
         }
     }).collect()
 }

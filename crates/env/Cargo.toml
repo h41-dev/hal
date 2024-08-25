@@ -13,4 +13,4 @@ hal-wat = { path = "../wat" }
 
 
 [dev-dependencies]
-wast={ version = "215.0.0"}
+wast={ version = "216.0.0" }
