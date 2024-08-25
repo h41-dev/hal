@@ -37,8 +37,6 @@ fn run_test(category: &str, file: &str) {
             Wat(module) => {
                 let (name, bytes) = read_quote_wat(module);
                 env.spawn(wasm_source::bytes(bytes)).expect("TODO: panic message");
-
-                println!("module")
             }
 
             AssertReturn {
@@ -64,7 +62,14 @@ fn run_test(category: &str, file: &str) {
 
             AssertMalformed { .. } => { todo!() }
 
-            AssertInvalid { .. } => { todo!() }
+            AssertInvalid { span: _, module, message } => {
+                let (_, bytes) = read_quote_wat(module);
+                let err = env.load(wasm_source::bytes(bytes)).err().expect(
+                    format!("{} - Expected error but was ok", formatted_directive).as_str()
+                );
+                // FIXME requires validation implementation
+                todo!()
+            }
 
             AssertExhaustion { .. } => { todo!() }
 
@@ -77,7 +82,7 @@ fn run_test(category: &str, file: &str) {
                                 panic!("{} - expected trap, but got {:?}", formatted_directive, results)
                             }
                             Err(e) => {
-                                assert_eq!(message, format!("{}",e));
+                                assert_eq!(message, format!("{}", e));
                             }
                         };
                     }
@@ -121,7 +126,7 @@ pub fn map_wast_return_value(args: &Vec<WastRet>) -> Box<[Value]> {
         };
         match ret {
             WastRetCore::I32(v) => Value::I32(*v),
-            WastRetCore::I64(_) => todo!(),
+            WastRetCore::I64(v) => Value::I64(*v),
             WastRetCore::F32(_) => todo!(),
             WastRetCore::F64(_) => todo!(),
             WastRetCore::V128(_) => todo!(),
@@ -147,7 +152,7 @@ pub fn map_wast_args(args: &Vec<WastArg>) -> Vec<Value> {
         };
         match arg {
             WastArgCore::I32(v) => Value::I32(*v),
-            WastArgCore::I64(_) => todo!(),
+            WastArgCore::I64(v) => Value::I64(*v),
             WastArgCore::F32(_) => todo!(),
             WastArgCore::F64(_) => todo!(),
             WastArgCore::V128(_) => todo!(),

@@ -18,6 +18,7 @@ members = [
     "crates/core",
     "crates/env",
     "crates/process",
+    "crates/validate",
     "crates/wasm",
     "crates/wat"
 ]

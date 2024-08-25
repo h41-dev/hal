@@ -11,3 +11,4 @@ macro_rules! test {
 
 
 test!(i32);
+test!(i64);

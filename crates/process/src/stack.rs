@@ -100,13 +100,13 @@ impl Default for Stack {
 }
 
 impl StackAccess for i32 {
-    fn push(stack: &mut Stack, value: Self) -> Result<()> {
+    fn push(stack: &mut Stack, value: i32) -> Result<()> {
         stack.push_bytes(&value.to_le_bytes(), ValueType::I32)
     }
 
-    fn peek(stack: &Stack) -> Result<Self> {
+    fn peek(stack: &Stack) -> Result<i32> {
         stack.expect_type(ValueType::I32)?;
-        Ok(Self::from_le_bytes(stack.peek_bytes(size_of::<Self>())?))
+        Ok(i32::from_le_bytes(stack.peek_bytes(size_of::<i32>())?))
     }
 }
 
@@ -117,18 +117,29 @@ impl StackAccess for u32 {
 
     fn peek(stack: &Stack) -> Result<Self> {
         stack.expect_type(ValueType::I32)?;
-        Ok(u32::from_le_bytes(stack.peek_bytes(size_of::<i32>())?))
+        Ok(u32::from_le_bytes(stack.peek_bytes(size_of::<u32>())?))
     }
 }
 
 impl StackAccess for i64 {
-    fn push(stack: &mut Stack, value: Self) -> Result<()> {
+    fn push(stack: &mut Stack, value: i64) -> Result<()> {
         stack.push_bytes(&value.to_le_bytes(), ValueType::I64)
     }
 
-    fn peek(stack: &Stack) -> Result<Self> {
+    fn peek(stack: &Stack) -> Result<i64> {
         stack.expect_type(ValueType::I64)?;
-        Ok(Self::from_le_bytes(stack.peek_bytes(size_of::<Self>())?))
+        Ok(i64::from_le_bytes(stack.peek_bytes(size_of::<i64>())?))
+    }
+}
+
+impl StackAccess for u64 {
+    fn push(stack: &mut Stack, value: u64) -> Result<()> {
+        stack.push_bytes(&value.to_le_bytes(), ValueType::I64)
+    }
+
+    fn peek(stack: &Stack) -> Result<u64> {
+        stack.expect_type(ValueType::I64)?;
+        Ok(u64::from_le_bytes(stack.peek_bytes(size_of::<u64>())?))
     }
 }
 

@@ -1,15 +1,13 @@
 use alloc::string::ToString;
-use alloc::vec;
 use core::fmt::{Display, Formatter};
 
 use hal_core::module::ModuleId;
-use hal_process::{Process, Store};
 use hal_wasm::WasmParser;
 use hal_wat::WatParser;
 
-use crate::{Environment, Instance};
 use crate::env::error::LoadError;
 use crate::env::source::{wasm_source, wat_source};
+use crate::Environment;
 
 pub trait LoadWasm<SOURCE> {
     fn load(&mut self, source: SOURCE) -> Result<ModuleId, LoadError>;
@@ -60,15 +58,14 @@ mod tests {
                 let mut ti = Environment::default();
                 let result = ti.load(wat_source::string("(module)"));
                 assert!(result.is_ok(), "Loading module via string failed");
-                todo!()
+                assert_eq!(result.unwrap(), 0);
             }
 
             #[test]
             fn parsing_fails() {
                 let mut ti = Environment::default();
                 let result = ti.load(wat_source::string("(module"));
-                assert_eq!(result.err(), Some(LoadError::wasm_parsing_failed("expected `)`\n     --> <anon>:1:8\n      |\n    1 | (module\n      |        ^")));
-                todo!()
+                assert_eq!(result.err(), Some(LoadError::wat_parsing_failed("expected `)`\n     --> <anon>:1:8\n      |\n    1 | (module\n      |        ^")));
             }
         }
     }
